@@ -190,6 +190,10 @@ section.view { padding-top: 20px; }
   .card.pick:hover { transform: translateY(-4px); transition: transform .15s; }
 }
 /* board */
+.history { display: grid; gap: 6px; }
+.history h3 { font-size: 16px; margin-top: 6px; }
+.hrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--panel-2); border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+.hrow .btn { padding: 6px 10px; font-size: 13px; flex: none; }
 .hpchg { display: inline-block; font: 800 12px var(--head); padding: 2px 8px; border-radius: 999px; vertical-align: middle; font-variant-numeric: tabular-nums; }
 .hpchg.neg { background: color-mix(in srgb, var(--hunt) 35%, var(--panel-2)); color: var(--fg); }
 .hpchg.pos { background: color-mix(in srgb, var(--ooze) 35%, var(--panel-2)); color: var(--fg); }
@@ -342,6 +346,7 @@ body.ingame nav.tabs { margin-top: 4px; }
       <div class="row"><span class="lbl">Families in play</span><div class="chips" id="famPick"></div></div>
       <div class="math" id="math"></div>
       <div><button class="btn" type="button" id="startGame">Start game</button></div>
+      <div class="history" id="history"></div>
     </div>
     <div id="splash" class="splash" hidden></div>
     <div id="flash" class="flash"></div>
@@ -604,7 +609,7 @@ body.ingame nav.tabs { margin-top: 4px; }
       deck: shuffle(DATA.traits.filter((t) => fams.includes(t.f) || t.f === "Freak").map(mk)),
       discard: [], moonDeck: [], players: [], round: 0, moon: null, lastFlip: null, huntsHit: 0,
       huntsTotal: settings.hunts, first: 0, lastPlayed: null, over: false, moonHealth: 0,
-      unbuilt: new Set(), turnOf: null, results: null, log: [],
+      unbuilt: new Set(), turnOf: null, results: null, log: [], flipped: [],
     };
 
     // players: the human (unless a bot-only test) then the computer players
@@ -625,12 +630,15 @@ body.ingame nav.tabs { margin-top: 4px; }
       while (pool.length < need) pool = pool.concat(shuffle(DATA.moons));
       hunts.forEach((h, i) => {
         const set = pool.slice(i * (settings.per - 1), (i + 1) * (settings.per - 1)).map((m) => ({ ...m, k: "moon" }));
-        G.moonDeck.push(...shuffle(set.concat([{ ...h, k: "hunt", set: i + 1 }])));
+        const stack = shuffle(set.concat([{ ...h, k: "hunt", set: i + 1 }]));
+        // a Hunt never opens its set: at least one Moon always comes before it
+        if (stack.length > 1 && stack[0].k === "hunt") { const j = 1 + Math.floor(Math.random() * (stack.length - 1)); [stack[0], stack[j]] = [stack[j], stack[0]]; }
+        G.moonDeck.push(...stack);
       });
     })();
 
     // ---------- small helpers ----------
-    const log = (msg) => { G.log.push(msg); if (G.log.length > 200) G.log.shift(); H.log(msg); };
+    const log = (msg) => { G.log.push(msg); if (G.log.length > 600) G.log.shift(); H.log(msg); };
     const opps = (p) => G.players.filter((q) => q !== p);
     const hasTrait = (p, name) => p.monster.some((e) => e.c.n === name);
     const famOf = (e) => e.fam || e.c.f;
@@ -1306,11 +1314,12 @@ body.ingame nav.tabs { margin-top: 4px; }
       const card = G.moonDeck.shift();
       if (!card) { await endGame(); return; }
       G.moon = null; G.moonHealth = 0; G.lastFlip = card;
+      G.flipped.push(`${G.round}:${card.k === "hunt" ? "HUNT " : ""}${card.n}`);
       G.players.forEach((q) => { q.echoed = false; });
       if (card.k === "hunt") {
         G.huntsHit++;
         const hp = card.hp || 0;
-        log(`HUNT ${G.huntsHit}/${G.huntsTotal}: ${card.n} (${hp > 0 ? "+" : ""}${hp} Health). ${card.fl || ""} ${card.e}`);
+        log(`HUNT ${G.huntsHit}/${G.huntsTotal} (round ${G.round}): ${card.n} (${hp > 0 ? "+" : ""}${hp} Health). ${card.fl || ""} ${card.e}`);
         if (hp) G.players.forEach((q) => { q.health += hp; });
         H.update(); await H.wait(2);
         await (HUNTS[card.n] || (async () => { G.unbuilt.add("Hunt " + card.n); }))();
@@ -1641,14 +1650,52 @@ function renderHand(G, me, req, optIdx) {
     return h;
   }).join("") || '<span class="empty">No cards in hand.</span>';
 }
+/* game history: last 10 games kept on this device, each can be copied as text */
+const HIST_KEY = "stitched-history";
+function loadHist() { try { return JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); } catch { return []; } }
+function gameRecord(G) {
+  return { at: new Date().toLocaleString(), settings: { cpu: S.cpu, hunts: S.hunts, per: S.per, app: S.app, level: S.level, fams: S.fams.slice() },
+    results: (G.results || []).map((r) => ({ name: r.p.name, total: r.total, traits: r.traits })), flipped: G.flipped.slice(), log: G.log.slice() };
+}
+function saveGame(G) {
+  if (G.saved) return;
+  G.saved = true;
+  const h = loadHist();
+  h.unshift(gameRecord(G));
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0, 10))); } catch {}
+  drawHistory();
+}
+function histText(g) {
+  const st = g.settings;
+  return [`Stitched game, ${g.at}`,
+    `Settings: ${st.cpu} computer (${st.level}), ${st.hunts} Hunts x ${st.per} cards, Health ${st.app}, families: ${st.fams.join(", ")}`,
+    `Results: ${g.results.map((r) => `${r.name} ${r.total} (${r.traits} traits)`).join(", ") || "not finished"}`,
+    `Moon deck as it came up (round:card): ${g.flipped.join(" | ")}`, "", ...g.log].join(String.fromCharCode(10));
+}
+function copyText(t, btn) {
+  const done = () => { const old = btn.textContent; btn.textContent = "Copied"; setTimeout(() => { btn.textContent = old; }, 1500); };
+  const fallback = () => { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch {} ta.remove(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
+}
+function drawHistory() {
+  const h = loadHist();
+  $("#history").innerHTML = h.length ? `<h3>Past games</h3>` + h.map((g, i) => `<div class="hrow"><span>${esc(g.at)}<br><span class="note">${g.results[0] ? `${esc(g.results[0].name)} won with ${g.results[0].total}` : "not finished"} · ${g.settings.hunts} Hunts &times; ${g.settings.per}</span></span><button class="btn ghost" type="button" data-copylog="${i}">Copy log</button></div>`).join("") : "";
+}
+$("#history").addEventListener("click", (ev) => {
+  const b = ev.target.closest("[data-copylog]");
+  if (b) copyText(histText(loadHist()[+b.dataset.copylog]), b);
+});
+drawHistory();
 function renderEnd(G) {
   const eb = $("#endBox");
   eb.hidden = !G.over || !G.results;
   if (!G.over || !G.results) return;
+  saveGame(G);
   const w = G.results[0];
   eb.innerHTML = `<div class="results"><h2>${w.p.bot ? `${esc(w.p.name)} wins` : "You win!"}</h2><div class="tablewrap"><table><tr><th>Player</th><th>Traits</th><th>Card pts</th><th>End of game</th><th>Families</th><th>Full set</th><th>Total</th></tr>`
     + G.results.map((r) => `<tr><td>${esc(r.p.name)}</td><td>${r.traits}</td><td>${r.base}</td><td>${r.end}</td><td>${r.fam}</td><td>${r.full}</td><td><b>${r.total}</b></td></tr>`).join("")
-    + `</table></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="again">Play again</button><button class="btn ghost" type="button" id="newSetup">New game menu</button></div></div>`;
+    + `</table></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="again">Play again</button><button class="btn ghost" type="button" id="newSetup">New game menu</button><button class="btn ghost" type="button" id="copyNow">Copy log</button></div></div>`;
+  $("#copyNow").onclick = (ev) => copyText(histText(gameRecord(G)), ev.currentTarget);
   $("#again").onclick = startGame;
   $("#newSetup").onclick = quitGame;
 }
