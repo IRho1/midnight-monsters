@@ -143,6 +143,58 @@ section.view { padding-top: 20px; }
 .rules td, .rules th { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .rules th { font-family: var(--head); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; }
 .tablewrap { overflow-x: auto; }
+/* board */
+body.ingame .lid { display: none; }
+body.ingame nav.tabs { margin-top: 4px; }
+.seats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 8px; margin-bottom: 10px; }
+.seat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 6px; min-width: 0; cursor: pointer; text-align: left; }
+.seat:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.seat.turn, .field.turn { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.seat-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.seat-top b { font: 800 16px var(--head); }
+.hp { font: 800 12px var(--head); padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--hunt) 20%, var(--panel-2)); color: var(--fg); font-variant-numeric: tabular-nums; }
+.seat-stats { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; align-items: center; }
+.seat-stats .sc, .fieldhead .sc { color: var(--fg); font-weight: 700; }
+.seat-stats .now { color: var(--accent); }
+.seat .open { font: 700 12px var(--head); color: var(--accent); justify-self: end; }
+.seat .more { font-size: 11px; color: var(--muted); align-self: center; }
+.pips { display: flex; flex-wrap: wrap; gap: 4px; }
+.pip { --c: var(--muted); min-width: 22px; padding: 1px 6px; border-radius: 999px; font: 800 11px var(--head); text-align: center; background: color-mix(in srgb, var(--c) 30%, var(--panel-2)); color: var(--fg); }
+.mini.fam-fang, .pip.fam-fang { --c: var(--fang); } .mini.fam-ooze, .pip.fam-ooze { --c: var(--ooze); } .mini.fam-spook, .pip.fam-spook { --c: var(--spook); }
+.mini.fam-bone, .pip.fam-bone { --c: var(--bone); } .mini.fam-scale, .pip.fam-scale { --c: var(--scale); } .mini.fam-stitch, .pip.fam-stitch { --c: var(--stitch); } .mini.fam-freak, .pip.fam-freak { --c: var(--freak); }
+.mini, .pip { color: var(--fg); }
+.center { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin-bottom: 10px; padding: 10px; border-radius: var(--r); border: 1px dashed var(--line); }
+.center .flip { flex: 1 1 240px; min-width: 0; border-radius: var(--r); padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); }
+.center .flip.hunt { border-color: var(--hunt); background: color-mix(in srgb, var(--hunt) 14%, var(--panel)); }
+.center .flip .k { font: 800 11px var(--head); text-transform: uppercase; letter-spacing: .1em; color: var(--moon); }
+.center .flip.hunt .k { color: var(--hunt); }
+.center .flip b { display: block; font: 800 17px var(--head); }
+.center .flip .t { font-size: 13px; color: var(--muted); }
+.center .nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; flex: 0 1 230px; }
+.center .num { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 12px; color: var(--muted); text-align: left; }
+.center .num b { display: block; font: 800 17px var(--head); color: var(--fg); font-variant-numeric: tabular-nums; }
+.center button.num { cursor: pointer; }
+.field { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; margin-bottom: 10px; }
+.fieldhead { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.fieldhead b { font: 800 16px var(--head); }
+.fieldhead .brk { font-size: 12px; color: var(--muted); flex-basis: 100%; }
+.fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 6px; }
+.fcard { --c: var(--muted); background: var(--panel-2); border: 1px solid color-mix(in srgb, var(--c) 45%, var(--line)); border-top: 4px solid var(--c); border-radius: 9px; padding: 6px 8px; cursor: pointer; min-width: 0; }
+.fcard.sig { background: color-mix(in srgb, var(--c) 14%, var(--panel-2)); }
+.fcard .ft { display: flex; justify-content: space-between; gap: 6px; font: 700 13px var(--head); }
+.fcard .ft b { color: var(--c); font-variant-numeric: tabular-nums; }
+.fcard p { margin: 3px 0 0; font-size: 11px; line-height: 1.3; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.fcard p b { color: var(--c); font-weight: 700; }
+.fcard.fam-fang { --c: var(--fang); } .fcard.fam-ooze { --c: var(--ooze); } .fcard.fam-spook { --c: var(--spook); } .fcard.fam-bone { --c: var(--bone); }
+.fcard.fam-scale { --c: var(--scale); } .fcard.fam-stitch { --c: var(--stitch); } .fcard.fam-freak { --c: var(--freak); }
+.fcard.fam-fang, .fcard.fam-ooze, .fcard.fam-spook, .fcard.fam-bone, .fcard.fam-scale, .fcard.fam-stitch, .fcard.fam-freak { color: var(--fg); }
+.oppview { display: grid; gap: 12px; margin-bottom: 10px; }
+.ovhead { display: grid; gap: 6px; justify-items: start; }
+.ovhead h2 { font-size: 24px; }
+@media (max-width: 759px) {
+  .hand.play { display: flex; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 6px; }
+  .hand.play .card { flex: 0 0 158px; scroll-snap-align: start; }
+}
 /* play table */
 .startbox { max-width: 520px; }
 .startbox h2 { font-size: 22px; }
@@ -205,12 +257,11 @@ section.view { padding-top: 20px; }
 <div class="wrap">
   <header class="lid">
     <h1>Stitched</h1>
-    <p>Stitch together the scariest monster before the hunters end the night for good. Preview of the cards and the game setup; the playable version comes next.</p>
+    <p>Stitch together the scariest monster before the hunters end the night for good. 2-6 players; play against the computer now, online play comes later.</p>
     <div class="stats"><span><b id="nTraits">0</b> traits</span><span><b id="nMoons">0</b> Moons</span><span><b id="nHunts">0</b> Hunts</span><span><b>7</b> families</span></div>
   </header>
   <nav class="tabs" aria-label="Sections">
     <a href="#play">Play</a>
-    <a href="#setup">Game setup</a>
     <a href="#traits">Traits</a>
     <a href="#moons">Moons</a>
     <a href="#hunts">Hunts</a>
@@ -219,58 +270,42 @@ section.view { padding-top: 20px; }
 
   <section class="view" id="v-play" hidden>
     <div id="startBox" class="panel startbox">
-      <h2>Play against the computer</h2>
-      <p class="note" id="startSummary"></p>
+      <h2>New game</h2>
+      <div class="row"><span class="lbl">Opponents</span>
+        <div class="chips">
+          <button class="chip" type="button" id="opp-cpu" aria-pressed="true">Computer</button>
+          <button class="chip soon" type="button" id="opp-online" aria-pressed="false" disabled>Online friend (soon)</button>
+          <button class="chip soon" type="button" id="opp-near" aria-pressed="false" disabled>Nearby (soon)</button>
+        </div>
+      </div>
+      <div class="row"><label for="s-cpu">Computer players</label><div class="stepper" data-key="cpu" data-min="1" data-max="5"></div></div>
       <div class="row"><span class="lbl">Computer skill</span>
         <div class="chips"><button class="chip" type="button" id="lvl-easy" aria-pressed="false">Easy</button><button class="chip" type="button" id="lvl-normal" aria-pressed="true">Normal</button></div>
       </div>
       <div class="row"><span class="lbl">Computer speed</span>
         <div class="chips"><button class="chip" type="button" id="spd-slow" aria-pressed="false">Slow</button><button class="chip" type="button" id="spd-normal" aria-pressed="true">Normal</button><button class="chip" type="button" id="spd-fast" aria-pressed="false">Fast</button></div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="startGame">Start game</button><a class="btn ghost" href="#setup" style="text-decoration:none">Change setup</a></div>
+      <div class="row"><label for="s-hunts">Hunts</label><div class="stepper" data-key="hunts" data-min="1" data-max="10"></div></div>
+      <div class="row"><label for="s-per">Cards per Hunt set</label><div class="stepper" data-key="per" data-min="2" data-max="10"></div></div>
+      <div class="row"><label for="s-app">Starting Health (hand size)</label><div class="stepper" data-key="app" data-min="3" data-max="7"></div></div>
+      <div class="row"><span class="lbl">Families in play</span><div class="chips" id="famPick"></div></div>
+      <div class="math" id="math"></div>
+      <div><button class="btn" type="button" id="startGame">Start game</button></div>
     </div>
     <div id="table" hidden>
-      <div class="topbar" id="topbar"></div>
-      <div class="opps" id="opps"></div>
-      <div class="mine">
-        <div class="minehead" id="mineHead"></div>
-        <div class="minis" id="myMonster"></div>
+      <div id="endBox" hidden></div>
+      <div id="board">
+        <div class="seats" id="seats"></div>
+        <div class="center" id="center"></div>
+        <div class="field" id="field"></div>
       </div>
+      <div class="oppview" id="oppView" hidden></div>
       <div class="detail" id="detail" hidden></div>
       <div class="prompt" id="prompt" aria-live="polite"></div>
       <div class="handhead" id="handHead"></div>
       <div class="hand play" id="myHand"></div>
-      <div id="endBox" hidden></div>
-      <details class="logbox" open><summary>Game log</summary><ol id="log"></ol></details>
+      <details class="logbox"><summary>Game log</summary><ol id="log"></ol></details>
       <div style="margin-top:12px"><button class="btn ghost" type="button" id="quitGame">End this game</button></div>
-    </div>
-  </section>
-
-  <section class="view" id="v-setup" hidden>
-    <div class="setup">
-      <div class="panel" aria-label="Game settings">
-        <div class="row"><span class="lbl">Opponents</span>
-          <div class="chips" id="oppKind">
-            <button class="chip" type="button" id="opp-cpu" aria-pressed="true">Computer</button>
-            <button class="chip soon" type="button" id="opp-online" aria-pressed="false" title="Comes with online play">Online friend (soon)</button>
-            <button class="chip soon" type="button" id="opp-near" aria-pressed="false" title="Comes with the iPhone app">Nearby (soon)</button>
-          </div>
-        </div>
-        <div class="row"><label for="s-cpu">Computer players</label><div class="stepper" data-key="cpu" data-min="1" data-max="5"></div></div>
-        <div class="row"><label for="s-hunts">Hunts</label><div class="stepper" data-key="hunts" data-min="1" data-max="10"></div></div>
-        <div class="row"><label for="s-per">Cards per Hunt deck</label><div class="stepper" data-key="per" data-min="2" data-max="10"></div></div>
-        <div class="row"><label for="s-app">Starting Health (hand size)</label><div class="stepper" data-key="app" data-min="3" data-max="7"></div></div>
-        <div class="row"><span class="lbl">Families in play</span><div class="chips" id="famPick"></div></div>
-        <div class="math" id="math"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="shuffle">Shuffle the Moon deck</button><button class="btn ghost" type="button" id="dealHand">Deal a hand</button></div>
-      </div>
-      <div class="deal">
-        <div><h2>Sample Moon deck</h2><p class="note">An example of how a game's Moon deck could come out with these settings; each game shuffles a new one. The deck is read left to right, one card per round. Each set is shuffled on its own, so its Hunt can show up anywhere in the set. The last set's Hunt ends the game; anything after it is never played.</p></div>
-        <div class="legend"><span><b style="color:var(--moon)">Moon</b>: rule for one round</span><span><b style="color:var(--hunt)">Hunt</b>: hits everyone</span><span>Ringed: final Hunt</span></div>
-        <div id="stacks" class="deal"></div>
-        <div><h2>Sample starting hand</h2><p class="note">Random traits from the families in play.</p></div>
-        <div class="hand" id="hand"></div>
-      </div>
     </div>
   </section>
 
@@ -1157,7 +1192,7 @@ function traitCard(t) {
     + `<h3>${esc(t.n)}</h3><p>${fmt(t.e)}</p>${t.s ? '<span class="sigtag">Signature</span>' : ""}</article>`;
 }
 
-/* setup */
+/* new game menu */
 document.querySelectorAll(".stepper").forEach((el) => {
   const k = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max;
   el.innerHTML = `<button type="button" aria-label="Less" id="s-${k}-minus">&minus;</button><output id="s-${k}"></output><button type="button" aria-label="More" id="s-${k}-plus">+</button><small>${min}-${max}</small>`;
@@ -1177,31 +1212,11 @@ function drawFamPick() {
   });
 }
 function changed() {
-  const total = S.hunts * S.per, deckSize = DATA.traits.filter((t) => S.fams.includes(t.f)).length;
-  $("#math").innerHTML = `${S.hunts} Hunt${S.hunts > 1 ? "s" : ""} &times; ${S.per} cards = <b>${total}</b> Moon deck cards (${S.hunts * (S.per - 1)} Moons + ${S.hunts} Hunts)<br><span class="note">${S.cpu + 1} players &middot; trait deck ${deckSize} cards &middot; Health ${S.app}</span>`;
-  save(); dealMoons(); dealHand();
+  const total = S.hunts * S.per, deckSize = DATA.traits.filter((t) => S.fams.includes(t.f) || t.f === "Freak").length;
+  $("#math").innerHTML = `${S.hunts} Hunt${S.hunts > 1 ? "s" : ""} &times; ${S.per} cards = <b>${total}</b>-card Moon deck (${S.hunts * (S.per - 1)} Moons + ${S.hunts} Hunts)`
+    + `<br><span class="note">Moons and Hunts are drawn at random and stay face down until they're flipped. ${S.cpu + 1} players &middot; ${deckSize} trait cards &middot; Health ${S.app}</span>`;
+  save();
 }
-function dealMoons() {
-  const hunts = shuffle(DATA.hunts).slice(0, S.hunts);
-  let pool = [];
-  const need = S.hunts * (S.per - 1);
-  while (pool.length < need) pool = pool.concat(shuffle(DATA.moons));
-  const stacks = hunts.map((h, i) => shuffle(pool.slice(i * (S.per - 1), (i + 1) * (S.per - 1)).map((m) => ({ ...m, k: "moon" })).concat([{ ...h, k: "hunt" }])));
-  const last = stacks[stacks.length - 1], fi = last.findIndex((c) => c.k === "hunt");
-  let n = 0;
-  $("#stacks").innerHTML = stacks.map((st, si) => `<div class="stack"><span class="lbl">Set ${si + 1}</span><div class="tiles">`
-    + st.map((c, ci) => {
-      n++;
-      const fin = si === stacks.length - 1 && ci === fi, un = si === stacks.length - 1 && ci > fi;
-      return `<div class="tile ${c.k}${fin ? " final" : ""}${un ? " unplayed" : ""}" title="${esc(c.e)}"><span class="k">${c.k === "hunt" ? (fin ? "Final Hunt" : "Hunt") : un ? "Never played" : "Round " + n}</span><span class="nm">${esc(c.n)}</span></div>`;
-    }).join("") + `</div></div>`).join("");
-}
-function dealHand() {
-  const pool = DATA.traits.filter((t) => S.fams.includes(t.f) || t.f === "Freak");
-  $("#hand").innerHTML = shuffle(pool).slice(0, S.app).map(traitCard).join("");
-}
-$("#shuffle").onclick = dealMoons;
-$("#dealHand").onclick = dealHand;
 drawFamPick(); changed();
 
 /* traits browser */
@@ -1237,7 +1252,7 @@ $("#mgrid").innerHTML = DATA.moons.map((m) => `<article class="card moon"><heade
 $("#hgrid").innerHTML = DATA.hunts.map((h) => `<article class="card hunt"><header><span class="fam" style="color:var(--hunt)">Hunt</span></header><h3>${esc(h.n)}</h3><p>${esc(h.e)}</p></article>`).join("");
 
 /* play against the computer */
-const PLAY = { G: null, pending: null, detail: null, gid: 0, speed: { slow: 750, normal: 400, fast: 90 }, raf: 0 };
+const PLAY = { G: null, pending: null, detail: null, view: null, gid: 0, speed: { slow: 750, normal: 400, fast: 90 }, raf: 0 };
 if (!S.level) S.level = "normal";
 if (!S.speed) S.speed = "normal";
 function chipGroup(prefix, key, vals) {
@@ -1247,38 +1262,75 @@ function chipGroup(prefix, key, vals) {
 }
 chipGroup("lvl", "level", ["easy", "normal"]);
 chipGroup("spd", "speed", ["slow", "normal", "fast"]);
-function startSummary() {
-  $("#startSummary").textContent = `${S.cpu} computer player${S.cpu > 1 ? "s" : ""} · ${S.hunts} Hunt${S.hunts > 1 ? "s" : ""} × ${S.per} cards (${S.hunts * S.per}-card Moon deck) · Health ${S.app} · ${S.fams.length === FAMS.length ? "all families" : S.fams.join(", ")}. Change these in Game setup.`;
-}
+
 let REG = [];
 const famClass = (e) => (e.fam || e.c.f).toLowerCase();
-const miniHtml = (e) => { REG.push(e.c); return `<button type="button" class="mini fam-${famClass(e)}${e.c.s ? " sig" : ""}" data-r="${REG.length - 1}" title="${esc(e.c.e)}">${esc(e.c.n)}<b>${e.c.p}${e.tok ? "+" + e.tok : ""}</b></button>`; };
+const regCard = (c) => { REG.push(c); return REG.length - 1; };
+const ptsText = (e) => `${e.c.p}${e.tok ? "+" + e.tok : ""}`;
+// small trait on an opponent's seat (not clickable on its own: the whole seat opens their board)
+const seatChip = (e) => `<span class="mini fam-${famClass(e)}${e.c.s ? " sig" : ""}">${esc(e.c.n)}<b>${ptsText(e)}</b></span>`;
+// your field: compact card, tap to read it in full
+const fieldCard = (e) => `<div class="fcard fam-${famClass(e)}${e.c.s ? " sig" : ""}" data-r="${regCard(e.c)}" role="button" tabindex="0"><div class="ft"><span>${esc(e.c.n)}</span><b>${ptsText(e)}</b></div><p>${fmt(e.c.e)}</p></div>`;
+function famPips(p) {
+  const n = {};
+  p.monster.forEach((e) => { const f = e.fam || e.c.f; n[f] = (n[f] || 0) + 1; });
+  return FAMS.filter((f) => n[f]).map((f) => `<span class="pip fam-${f.toLowerCase()}" title="${f}">${n[f]}</span>`).join("");
+}
 function optCard(o, i) {
   return traitCard(o.card).replace('<article class="card', `<article data-opt="${i}" role="button" tabindex="0" class="card pick`)
     .replace("<h3>", o.owner ? `<span class="ownr">${esc(o.owner)}</span><h3>` : "<h3>");
 }
 function scheduleRender() { if (!PLAY.raf) PLAY.raf = requestAnimationFrame(() => { PLAY.raf = 0; render(); }); }
-function render() {
-  const G = PLAY.G;
-  if (!G) return;
-  REG = [];
-  const pend = PLAY.pending, req = pend && pend.req;
-  const optIdx = new Map();
-  if (req) req.options.forEach((o, i) => optIdx.set(o.value, i));
+
+function renderSeats(G) {
+  const SHOW = 6;
+  $("#seats").innerHTML = G.players.filter((p) => p.bot).map((p) => {
+    const i = G.players.indexOf(p);
+    const chips = p.monster.slice(-SHOW).map(seatChip).join("") + (p.monster.length > SHOW ? `<span class="more">+${p.monster.length - SHOW} more</span>` : "");
+    return `<div class="seat${G.turnOf === p ? " turn" : ""}" data-seat="${i}" role="button" tabindex="0" aria-label="${esc(p.name)}: open their board">`
+      + `<div class="seat-top"><b>${esc(p.name)}</b><span class="hp" title="Health">HP ${G.effHealth(p)}</span></div>`
+      + `<div class="seat-stats"><span class="sc">${G.score(p)} pts</span><span>${p.hand.length} in hand</span><span>${p.monster.length} traits</span>${G.turnOf === p ? '<span class="now">playing…</span>' : ""}</div>`
+      + `<div class="pips">${famPips(p)}</div>`
+      + `<div class="minis">${chips || '<span class="empty">No traits yet</span>'}</div>`
+      + `<span class="open">See board &rsaquo;</span></div>`;
+  }).join("");
+}
+function renderCenter(G) {
   const f = G.lastFlip;
-  $("#topbar").innerHTML = (f
+  const flip = f
     ? `<div class="flip ${f.k}"><span class="k">${f.k === "hunt" ? `Hunt ${G.huntsHit} of ${G.huntsTotal}` : `Round ${G.round} · Moon`}</span><b>${esc(f.n)}</b><span class="t">${esc(f.e)}</span></div>`
-    : `<div class="flip"><span class="k">Dealing</span><b>Get ready</b></div>`)
-    + `<div class="nums"><div class="num"><b>${G.huntsHit}/${G.huntsTotal}</b>Hunts</div><div class="num"><b>${G.moonDeck.length}</b>Moon deck</div><div class="num"><b>${G.deck.length}</b>Trait deck</div><div class="num"><b>${G.discard.length}</b>Discards</div></div>`;
-  const me = G.players.find((p) => !p.bot);
-  $("#opps").innerHTML = G.players.filter((p) => p.bot).map((p) => `<div class="opp${G.turnOf === p ? " turn" : ""}"><div class="who"><b>${esc(p.name)}</b><span class="sc">${G.score(p)} pts</span><span>${p.hand.length} cards · HP ${G.effHealth(p)}</span>${G.turnOf === p ? '<span style="color:var(--accent)">playing…</span>' : ""}</div><div class="minis">${p.monster.length ? p.monster.map(miniHtml).join("") : '<span class="empty">No traits yet</span>'}</div></div>`).join("");
+    : `<div class="flip"><span class="k">Dealing</span><b>Get ready</b></div>`;
+  $("#center").innerHTML = flip + `<div class="nums">`
+    + `<div class="num"><b>${G.huntsTotal - G.huntsHit}</b>Hunts left</div>`
+    + `<div class="num"><b>${G.moonDeck.length}</b>Moon deck</div>`
+    + `<div class="num"><b>${G.deck.length}</b>Trait deck</div>`
+    + `<button type="button" class="num" data-discard><b>${G.discard.length}</b>Discards &rsaquo;</button></div>`;
+}
+function renderField(G, me, req) {
   const parts = G.scoreParts(me);
-  document.querySelector(".mine").classList.toggle("turn", !!(req && req.kind === "play" && !req.optional));
-  $("#mineHead").innerHTML = `<b>Your monster</b><span class="sc">${parts.total} pts</span><span>${parts.base} on cards · ${parts.end >= 0 ? "+" : ""}${parts.end} end-of-game · +${parts.fam} families${parts.full ? " · +4 full set" : ""}</span>`;
-  $("#myMonster").innerHTML = me.monster.length ? me.monster.map(miniHtml).join("") : '<span class="empty">Play traits from your hand to build your monster.</span>';
-  $("#detail").hidden = !PLAY.detail;
-  $("#detail").innerHTML = PLAY.detail ? traitCard(PLAY.detail) + '<button class="btn ghost" type="button" data-closedetail>Close</button>' : "";
-  // prompt
+  $("#field").classList.toggle("turn", !!(req && req.kind === "play" && !req.optional));
+  $("#field").innerHTML = `<div class="fieldhead"><b>Your field</b><span class="hp">HP ${G.effHealth(me)}</span><span class="sc">${parts.total} pts</span>`
+    + `<span class="brk">${parts.base} on cards · ${parts.end >= 0 ? "+" : ""}${parts.end} end of game · +${parts.fam} families${parts.full ? " · +4 full set" : ""}</span></div>`
+    + (me.monster.length ? `<div class="fgrid">${me.monster.map(fieldCard).join("")}</div>` : '<span class="empty">Play traits from your hand to build your monster.</span>');
+}
+function renderOppView(G) {
+  const v = $("#oppView");
+  if (PLAY.view == null) { v.hidden = true; $("#board").hidden = false; return; }
+  $("#board").hidden = true; v.hidden = false;
+  const back = '<button class="btn ghost" type="button" data-back>&lsaquo; Back to table</button>';
+  if (PLAY.view === "discard") {
+    v.innerHTML = `<div class="ovhead">${back}<h2>Discard pile</h2><span class="note">${G.discard.length} cards, newest first</span></div>`
+      + `<div class="grid">${G.discard.slice().reverse().map(traitCard).join("") || '<span class="empty">Empty</span>'}</div>`;
+    return;
+  }
+  const p = G.players[PLAY.view];
+  const parts = G.scoreParts(p);
+  v.innerHTML = `<div class="ovhead">${back}<h2>${esc(p.name)}</h2>`
+    + `<div class="seat-stats"><span class="hp">HP ${G.effHealth(p)}</span><span class="sc">${parts.total} pts</span><span>${p.hand.length} cards in hand (hidden)</span><span>${p.monster.length} traits</span></div>`
+    + `<span class="note">${parts.base} on cards · ${parts.end >= 0 ? "+" : ""}${parts.end} end of game · +${parts.fam} families${parts.full ? " · +4 full set" : ""}</span><div class="pips">${famPips(p)}</div></div>`
+    + `<div class="grid">${p.monster.map((e) => traitCard({ ...e.c, f: e.fam || e.c.f, p: e.c.p + (e.tok || 0) })).join("") || '<span class="empty">No traits yet</span>'}</div>`;
+}
+function renderPrompt(G, me, req) {
   const pr = $("#prompt");
   if (req) {
     pr.className = "prompt";
@@ -1295,6 +1347,8 @@ function render() {
     pr.className = "prompt idle";
     pr.innerHTML = `<div class="q">${G.over ? "Game over." : G.turnOf ? `${esc(G.turnOf.name)} is playing…` : "…"}</div>`;
   }
+}
+function renderHand(G, me, req, optIdx) {
   $("#handHead").textContent = `Your hand · ${me.hand.length} cards · Health ${G.effHealth(me)}`;
   $("#myHand").innerHTML = me.hand.map((c) => {
     let h = traitCard(c);
@@ -1303,17 +1357,36 @@ function render() {
     }
     return h;
   }).join("") || '<span class="empty">No cards in hand.</span>';
-  $("#log").innerHTML = G.log.slice(-80).reverse().map((l) => `<li class="${/^HUNT/.test(l) ? "h" : /^Round/.test(l) ? "r" : ""}">${esc(l)}</li>`).join("");
-  // results
+}
+function renderEnd(G) {
   const eb = $("#endBox");
   eb.hidden = !G.over || !G.results;
-  if (G.over && G.results) {
-    const w = G.results[0];
-    eb.innerHTML = `<div class="results"><h2>${w.p.bot ? `${esc(w.p.name)} wins` : "You win!"}</h2><div class="tablewrap"><table><tr><th>Player</th><th>Traits</th><th>Cards</th><th>End of game</th><th>Families</th><th>Full set</th><th>Total</th></tr>`
-      + G.results.map((r) => `<tr><td>${esc(r.p.name)}</td><td>${r.traits}</td><td>${r.base}</td><td>${r.end}</td><td>${r.fam}</td><td>${r.full}</td><td><b>${r.total}</b></td></tr>`).join("")
-      + `</table></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="again">Play again</button><a class="btn ghost" href="#setup" style="text-decoration:none">Change setup</a></div></div>`;
-    $("#again").onclick = startGame;
-  }
+  if (!G.over || !G.results) return;
+  const w = G.results[0];
+  eb.innerHTML = `<div class="results"><h2>${w.p.bot ? `${esc(w.p.name)} wins` : "You win!"}</h2><div class="tablewrap"><table><tr><th>Player</th><th>Traits</th><th>Card pts</th><th>End of game</th><th>Families</th><th>Full set</th><th>Total</th></tr>`
+    + G.results.map((r) => `<tr><td>${esc(r.p.name)}</td><td>${r.traits}</td><td>${r.base}</td><td>${r.end}</td><td>${r.fam}</td><td>${r.full}</td><td><b>${r.total}</b></td></tr>`).join("")
+    + `</table></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="again">Play again</button><button class="btn ghost" type="button" id="newSetup">New game menu</button></div></div>`;
+  $("#again").onclick = startGame;
+  $("#newSetup").onclick = quitGame;
+}
+function render() {
+  const G = PLAY.G;
+  if (!G) return;
+  REG = [];
+  const req = PLAY.pending && PLAY.pending.req;
+  const optIdx = new Map();
+  if (req) req.options.forEach((o, i) => optIdx.set(o.value, i));
+  const me = G.players.find((p) => !p.bot);
+  renderEnd(G);
+  renderSeats(G);
+  renderCenter(G);
+  renderField(G, me, req);
+  renderOppView(G);
+  $("#detail").hidden = !PLAY.detail;
+  $("#detail").innerHTML = PLAY.detail ? traitCard(PLAY.detail) + '<button class="btn ghost" type="button" data-closedetail>Close</button>' : "";
+  renderPrompt(G, me, req);
+  renderHand(G, me, req, optIdx);
+  $("#log").innerHTML = G.log.slice(-80).reverse().map((l) => `<li class="${/^HUNT/.test(l) ? "h" : /^Round/.test(l) ? "r" : ""}">${esc(l)}</li>`).join("");
 }
 function resolvePending(v) {
   const p = PLAY.pending;
@@ -1327,10 +1400,16 @@ $("#table").addEventListener("click", (ev) => {
   if (o && PLAY.pending) { resolvePending(PLAY.pending.req.options[+o.dataset.opt].value); return; }
   if (ev.target.closest("[data-skip]")) { resolvePending(null); return; }
   if (ev.target.closest("[data-closedetail]")) { PLAY.detail = null; render(); return; }
+  if (ev.target.closest("[data-back]")) { PLAY.view = null; render(); return; }
+  if (ev.target.closest("[data-discard]")) { PLAY.view = "discard"; render(); return; }
+  const seat = ev.target.closest("[data-seat]");
+  if (seat) { PLAY.view = +seat.dataset.seat; render(); window.scrollTo({ top: 0 }); return; }
   const r = ev.target.closest("[data-r]");
   if (r) { PLAY.detail = REG[+r.dataset.r]; render(); }
 });
-$("#table").addEventListener("keydown", (ev) => { if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches("[data-opt]")) { ev.preventDefault(); ev.target.click(); } });
+$("#table").addEventListener("keydown", (ev) => {
+  if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches("[data-opt],[data-seat],[data-r]")) { ev.preventDefault(); ev.target.click(); }
+});
 function startGame() {
   const gid = ++PLAY.gid;
   const settings = { cpu: S.cpu, hunts: S.hunts, per: S.per, app: S.app, fams: S.fams, level: S.level, human: true };
@@ -1339,20 +1418,20 @@ function startGame() {
     update: () => { if (gid === PLAY.gid) scheduleRender(); },
     wait: (n) => new Promise((r) => setTimeout(r, gid === PLAY.gid ? n * PLAY.speed[S.speed] : 0)),
   });
-  PLAY.G = G; PLAY.pending = null; PLAY.detail = null;
-  $("#startBox").hidden = true; $("#table").hidden = false;
+  PLAY.G = G; PLAY.pending = null; PLAY.detail = null; PLAY.view = null;
+  $("#startBox").hidden = true; $("#table").hidden = false; document.body.classList.add("ingame");
   render();
   G.run().then(() => { if (gid === PLAY.gid) render(); })
     .catch((err) => { if (gid !== PLAY.gid) return; G.log.push(`Something broke: ${err && err.message}. Start a new game.`); render(); });
 }
+function quitGame() { PLAY.gid++; PLAY.G = null; PLAY.pending = null; PLAY.view = null; $("#table").hidden = true; $("#startBox").hidden = false; document.body.classList.remove("ingame"); }
 $("#startGame").onclick = startGame;
-$("#quitGame").onclick = () => { PLAY.gid++; PLAY.G = null; PLAY.pending = null; $("#table").hidden = true; $("#startBox").hidden = false; startSummary(); };
+$("#quitGame").onclick = quitGame;
 
 /* tabs */
-const VIEWS = ["play", "setup", "traits", "moons", "hunts", "rules"];
+const VIEWS = ["play", "traits", "moons", "hunts", "rules"];
 function route() {
   const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "play";
-  if (v === "play") startSummary();
   VIEWS.forEach((x) => { document.getElementById("v-" + x).hidden = x !== v; });
   document.querySelectorAll("nav.tabs a").forEach((a) => { if (a.getAttribute("href") === "#" + v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
 }
