@@ -101,7 +101,7 @@ section.view { padding-top: 20px; }
 .tile.hunt { border-color: var(--hunt); background: color-mix(in srgb, var(--hunt) 14%, var(--panel)); }
 .tile.hunt .k { color: var(--hunt); }
 .tile.final { box-shadow: 0 0 0 2px var(--hunt); }
-.tile.unplayed { opacity: .3; }
+.tile.unplayed { opacity: .3; animation: none !important; border-style: dashed; }
 .tile .nm { font-weight: 700; }
 .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--muted); }
 
@@ -265,7 +265,7 @@ section.view { padding-top: 20px; }
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="shuffle">Shuffle the Moon deck</button><button class="btn ghost" type="button" id="dealHand">Deal a hand</button></div>
       </div>
       <div class="deal">
-        <div><h2>Your Moon deck</h2><p class="note">Each set is shuffled on its own, so its Hunt can show up anywhere in the set. The last set's Hunt ends the game; anything under it is never played.</p></div>
+        <div><h2>Sample Moon deck</h2><p class="note">An example of how a game's Moon deck could come out with these settings; each game shuffles a new one. The deck is read left to right, one card per round. Each set is shuffled on its own, so its Hunt can show up anywhere in the set. The last set's Hunt ends the game; anything after it is never played.</p></div>
         <div class="legend"><span><b style="color:var(--moon)">Moon</b>: rule for one round</span><span><b style="color:var(--hunt)">Hunt</b>: hits everyone</span><span>Ringed: final Hunt</span></div>
         <div id="stacks" class="deal"></div>
         <div><h2>Sample starting hand</h2><p class="note">Random traits from the families in play.</p></div>
@@ -1193,7 +1193,7 @@ function dealMoons() {
     + st.map((c, ci) => {
       n++;
       const fin = si === stacks.length - 1 && ci === fi, un = si === stacks.length - 1 && ci > fi;
-      return `<div class="tile ${c.k}${fin ? " final" : ""}${un ? " unplayed" : ""}" title="${esc(c.e)}"><span class="k">${c.k === "hunt" ? (fin ? "Final Hunt" : "Hunt") : "Round " + n}</span><span class="nm">${esc(c.n)}</span></div>`;
+      return `<div class="tile ${c.k}${fin ? " final" : ""}${un ? " unplayed" : ""}" title="${esc(c.e)}"><span class="k">${c.k === "hunt" ? (fin ? "Final Hunt" : "Hunt") : un ? "Never played" : "Round " + n}</span><span class="nm">${esc(c.n)}</span></div>`;
     }).join("") + `</div></div>`).join("");
 }
 function dealHand() {
