@@ -1,0 +1,1365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#120e17">
+<meta name="description" content="Stitched: build the scariest monster before the hunters end the night.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stitched">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Stitched</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: a game box lid up top, then one tab at a time (Setup / Traits / Moons / Hunts / Rules); cards sit in a wrapping grid with a dashed "stitch" seam. Single dark look on purpose: it's a night-time monster game. */
+:root {
+  color-scheme: dark;
+  --bg: #120e17;          /* night sky with a violet bias */
+  --panel: #1c1623;
+  --panel-2: #251d2e;
+  --line: #3a2f45;
+  --fg: #efe8f3;
+  --muted: #a99bb5;
+  --accent: #b6ff5c;      /* lab-glow green, used only for the title drip and primary actions */
+  --hunt: #ff5a4f;
+  --moon: #d9d2ff;
+  --fang: #e0525a;
+  --ooze: #86d64e;
+  --spook: #93b4ff;
+  --bone: #e8dcc0;
+  --scale: #ff9445;
+  --stitch: #f2d14b;
+  --freak: #e566d6;
+  --display: "Rubik Wet Paint", "Bricolage Grotesque", system-ui, sans-serif;
+  --head: "Bricolage Grotesque", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --r: 12px;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  font: 15px/1.5 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--head); text-wrap: balance; margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* lid */
+.lid { padding-block: 28px 18px; display: grid; gap: 6px; }
+.lid h1 { font-family: var(--display); font-weight: 400; font-size: clamp(44px, 11vw, 96px); line-height: .95; color: var(--accent); letter-spacing: .02em; }
+.lid p { margin: 0; color: var(--muted); max-width: 60ch; }
+.lid .stats { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--head); font-weight: 700; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.lid .stats b { color: var(--fg); font-variant-numeric: tabular-nums; }
+
+/* tabs */
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; border-bottom: 1px solid var(--line); display: flex; gap: 4px; overflow-x: auto; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+nav.tabs a { flex: none; padding: 8px 14px; border-radius: 999px; color: var(--muted); text-decoration: none; font-family: var(--head); font-weight: 700; }
+nav.tabs a[aria-current="page"] { background: var(--panel-2); color: var(--fg); }
+section.view { padding-top: 20px; }
+.note { color: var(--muted); font-size: 13px; margin: 0; }
+
+/* setup */
+.setup { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .setup { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 14px; }
+.row { display: grid; gap: 6px; }
+.row label, .row .lbl { font-family: var(--head); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper button { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); font-size: 20px; line-height: 1; cursor: pointer; }
+.stepper button:disabled { opacity: .35; cursor: default; }
+.stepper output { min-width: 2.2ch; text-align: center; font: 800 22px var(--head); font-variant-numeric: tabular-nums; }
+.stepper small { color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 14px; }
+.chip[aria-pressed="true"] { border-color: currentColor; background: color-mix(in srgb, currentColor 18%, var(--panel-2)); }
+.chip.soon { opacity: .5; cursor: default; }
+.math { font: 700 15px var(--head); background: var(--panel-2); border-radius: 10px; padding: 10px 12px; font-variant-numeric: tabular-nums; }
+.btn { border: 0; border-radius: 10px; padding: 10px 16px; font: 800 15px var(--head); cursor: pointer; background: var(--accent); color: #18210c; }
+.btn.ghost { background: var(--panel-2); color: var(--fg); border: 1px solid var(--line); }
+
+.deal { display: grid; gap: 16px; min-width: 0; }
+.deal h2 { font-size: 20px; }
+.stack { display: grid; gap: 6px; }
+.stack .lbl { font: 700 12px var(--head); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.tiles { display: flex; flex-wrap: wrap; gap: 6px; }
+.tile { width: 104px; min-height: 64px; border-radius: 10px; padding: 7px 8px; background: var(--panel); border: 1px solid var(--line); font-size: 12px; line-height: 1.25; display: grid; align-content: start; gap: 3px; }
+.tile .k { font: 800 10px var(--head); text-transform: uppercase; letter-spacing: .08em; }
+.tile.moon .k { color: var(--moon); }
+.tile.hunt { border-color: var(--hunt); background: color-mix(in srgb, var(--hunt) 14%, var(--panel)); }
+.tile.hunt .k { color: var(--hunt); }
+.tile.final { box-shadow: 0 0 0 2px var(--hunt); }
+.tile.unplayed { opacity: .3; }
+.tile .nm { font-weight: 700; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--muted); }
+
+/* cards */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+.filters input[type="search"] { flex: 1 1 200px; min-width: 0; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); }
+.filters select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); }
+.count { color: var(--muted); font-size: 13px; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; }
+.card { --c: var(--muted); position: relative; background: var(--panel); border-radius: var(--r); padding: 12px 12px 14px; display: grid; gap: 6px; align-content: start; border: 1px solid color-mix(in srgb, var(--c) 35%, var(--line)); }
+.card::after { content: ""; position: absolute; inset: 5px; border: 1.5px dashed color-mix(in srgb, var(--c) 40%, transparent); border-radius: 8px; pointer-events: none; }
+.card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card .fam { font: 800 11px var(--head); text-transform: uppercase; letter-spacing: .1em; color: var(--c); }
+.card .pts { min-width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 800 16px var(--head); background: color-mix(in srgb, var(--c) 22%, var(--panel-2)); color: var(--fg); font-variant-numeric: tabular-nums; }
+.card h3 { font-size: 17px; line-height: 1.15; }
+.card p { margin: 0; font-size: 14px; color: color-mix(in srgb, var(--fg) 86%, var(--muted)); }
+.card p b { color: var(--c); font-weight: 700; }
+.card .sigtag { justify-self: start; font: 800 10px var(--head); text-transform: uppercase; letter-spacing: .1em; padding: 3px 8px; border-radius: 999px; background: var(--c); color: #140f18; }
+.card.sig { background: color-mix(in srgb, var(--c) 9%, var(--panel)); }
+.fam-fang { --c: var(--fang); color: var(--fang); }
+.fam-ooze { --c: var(--ooze); color: var(--ooze); }
+.fam-spook { --c: var(--spook); color: var(--spook); }
+.fam-bone { --c: var(--bone); color: var(--bone); }
+.fam-scale { --c: var(--scale); color: var(--scale); }
+.fam-stitch { --c: var(--stitch); color: var(--stitch); }
+.fam-freak { --c: var(--freak); color: var(--freak); }
+.card.fam-fang, .card.fam-ooze, .card.fam-spook, .card.fam-bone, .card.fam-scale, .card.fam-stitch, .card.fam-freak { color: var(--fg); }
+.card.moon { --c: var(--moon); }
+.card.hunt { --c: var(--hunt); }
+.moonicon { width: 22px; height: 22px; border-radius: 50%; background: var(--moon); box-shadow: inset -7px -2px 0 0 var(--panel); }
+.hand { display: flex; flex-wrap: wrap; gap: 8px; }
+.hand .card { width: 180px; }
+
+/* rules */
+.rules { display: grid; gap: 18px; max-width: 72ch; }
+.rules h2 { font-size: 22px; }
+.rules ol, .rules ul { margin: 6px 0 0; padding-left: 22px; display: grid; gap: 6px; }
+.rules table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.rules td, .rules th { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.rules th { font-family: var(--head); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; }
+.tablewrap { overflow-x: auto; }
+/* play table */
+.startbox { max-width: 520px; }
+.startbox h2 { font-size: 22px; }
+.topbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin-bottom: 12px; }
+.topbar .flip { flex: 1 1 260px; min-width: 0; border-radius: var(--r); padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); }
+.topbar .flip.hunt { border-color: var(--hunt); background: color-mix(in srgb, var(--hunt) 14%, var(--panel)); }
+.topbar .flip .k { font: 800 11px var(--head); text-transform: uppercase; letter-spacing: .1em; color: var(--moon); }
+.topbar .flip.hunt .k { color: var(--hunt); }
+.topbar .flip b { display: block; font: 800 17px var(--head); }
+.topbar .flip span.t { font-size: 13px; color: var(--muted); }
+.topbar .nums { display: flex; flex-wrap: wrap; gap: 6px; align-content: start; }
+.topbar .num { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 12px; color: var(--muted); }
+.topbar .num b { display: block; font: 800 17px var(--head); color: var(--fg); font-variant-numeric: tabular-nums; }
+.opps { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 8px; margin-bottom: 12px; }
+.opp { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 6px; min-width: 0; }
+.opp.turn, .mine.turn { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.opp .who, .minehead { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.opp .who b, .minehead b { font: 800 16px var(--head); }
+.opp .who span, .minehead span { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.opp .who .sc, .minehead .sc { color: var(--fg); font-weight: 700; }
+.mine { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; margin-bottom: 10px; }
+.minis { display: flex; flex-wrap: wrap; gap: 5px; }
+.mini { --c: var(--muted); border: 1px solid color-mix(in srgb, var(--c) 55%, var(--line)); border-left: 4px solid var(--c); background: var(--panel-2); border-radius: 8px; padding: 3px 8px; font-size: 12px; cursor: pointer; text-align: left; }
+.mini b { color: var(--c); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.mini.sig { background: color-mix(in srgb, var(--c) 16%, var(--panel-2)); }
+.mini.pick, .card.pick { outline: 2px solid var(--accent); outline-offset: 1px; cursor: pointer; }
+.empty { font-size: 12px; color: var(--muted); }
+.detail { margin-bottom: 10px; display: flex; gap: 8px; align-items: start; }
+.detail .card { width: min(100%, 260px); }
+.prompt { position: sticky; bottom: env(safe-area-inset-bottom, 0px); z-index: 4; background: color-mix(in srgb, var(--accent) 10%, var(--panel)); border: 1px solid var(--accent); border-radius: var(--r); padding: 10px 12px; margin-bottom: 10px; display: grid; gap: 8px; }
+.prompt.idle { background: var(--panel); border-color: var(--line); }
+.prompt .q { font: 700 15px var(--head); }
+.prompt .opts { display: flex; flex-wrap: wrap; gap: 6px; max-height: 46vh; overflow-y: auto; }
+.prompt .opts .card { width: 170px; cursor: pointer; }
+.prompt .opts .card .ownr { font-size: 11px; color: var(--muted); }
+.prompt .btn { padding: 8px 14px; }
+.handhead { font: 700 13px var(--head); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 6px; }
+.hand.play .card { width: 172px; }
+.hand.play .card.dim { opacity: .45; }
+.logbox { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 12px; }
+.logbox summary { cursor: pointer; font: 700 14px var(--head); }
+.logbox ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13px; color: color-mix(in srgb, var(--fg) 85%, var(--muted)); max-height: 260px; overflow-y: auto; }
+.logbox li.h { color: var(--hunt); font-weight: 700; }
+.logbox li.r { color: var(--moon); font-weight: 700; }
+.results { background: var(--panel); border: 1px solid var(--accent); border-radius: var(--r); padding: 14px; display: grid; gap: 10px; margin-bottom: 10px; }
+.results h2 { font-size: 24px; }
+.results table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+.results td, .results th { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+.results td:first-child, .results th:first-child { text-align: left; }
+.results th { font: 700 11px var(--head); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) {
+  .tile { animation: drop .25s ease-out both; }
+  @keyframes drop { from { transform: translateY(-6px); opacity: .4; } to { transform: none; opacity: 1; } }
+}
+</style>
+
+
+</head>
+<body>
+<div class="wrap">
+  <header class="lid">
+    <h1>Stitched</h1>
+    <p>Stitch together the scariest monster before the hunters end the night for good. Preview of the cards and the game setup; the playable version comes next.</p>
+    <div class="stats"><span><b id="nTraits">0</b> traits</span><span><b id="nMoons">0</b> Moons</span><span><b id="nHunts">0</b> Hunts</span><span><b>7</b> families</span></div>
+  </header>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#play">Play</a>
+    <a href="#setup">Game setup</a>
+    <a href="#traits">Traits</a>
+    <a href="#moons">Moons</a>
+    <a href="#hunts">Hunts</a>
+    <a href="#rules">Rules</a>
+  </nav>
+
+  <section class="view" id="v-play" hidden>
+    <div id="startBox" class="panel startbox">
+      <h2>Play against the computer</h2>
+      <p class="note" id="startSummary"></p>
+      <div class="row"><span class="lbl">Computer skill</span>
+        <div class="chips"><button class="chip" type="button" id="lvl-easy" aria-pressed="false">Easy</button><button class="chip" type="button" id="lvl-normal" aria-pressed="true">Normal</button></div>
+      </div>
+      <div class="row"><span class="lbl">Computer speed</span>
+        <div class="chips"><button class="chip" type="button" id="spd-slow" aria-pressed="false">Slow</button><button class="chip" type="button" id="spd-normal" aria-pressed="true">Normal</button><button class="chip" type="button" id="spd-fast" aria-pressed="false">Fast</button></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="startGame">Start game</button><a class="btn ghost" href="#setup" style="text-decoration:none">Change setup</a></div>
+    </div>
+    <div id="table" hidden>
+      <div class="topbar" id="topbar"></div>
+      <div class="opps" id="opps"></div>
+      <div class="mine">
+        <div class="minehead" id="mineHead"></div>
+        <div class="minis" id="myMonster"></div>
+      </div>
+      <div class="detail" id="detail" hidden></div>
+      <div class="prompt" id="prompt" aria-live="polite"></div>
+      <div class="handhead" id="handHead"></div>
+      <div class="hand play" id="myHand"></div>
+      <div id="endBox" hidden></div>
+      <details class="logbox" open><summary>Game log</summary><ol id="log"></ol></details>
+      <div style="margin-top:12px"><button class="btn ghost" type="button" id="quitGame">End this game</button></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-setup" hidden>
+    <div class="setup">
+      <div class="panel" aria-label="Game settings">
+        <div class="row"><span class="lbl">Opponents</span>
+          <div class="chips" id="oppKind">
+            <button class="chip" type="button" id="opp-cpu" aria-pressed="true">Computer</button>
+            <button class="chip soon" type="button" id="opp-online" aria-pressed="false" title="Comes with online play">Online friend (soon)</button>
+            <button class="chip soon" type="button" id="opp-near" aria-pressed="false" title="Comes with the iPhone app">Nearby (soon)</button>
+          </div>
+        </div>
+        <div class="row"><label for="s-cpu">Computer players</label><div class="stepper" data-key="cpu" data-min="1" data-max="5"></div></div>
+        <div class="row"><label for="s-hunts">Hunts</label><div class="stepper" data-key="hunts" data-min="1" data-max="10"></div></div>
+        <div class="row"><label for="s-per">Cards per Hunt deck</label><div class="stepper" data-key="per" data-min="2" data-max="10"></div></div>
+        <div class="row"><label for="s-app">Starting Health (hand size)</label><div class="stepper" data-key="app" data-min="3" data-max="7"></div></div>
+        <div class="row"><span class="lbl">Families in play</span><div class="chips" id="famPick"></div></div>
+        <div class="math" id="math"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="shuffle">Shuffle the Moon deck</button><button class="btn ghost" type="button" id="dealHand">Deal a hand</button></div>
+      </div>
+      <div class="deal">
+        <div><h2>Your Moon deck</h2><p class="note">Each set is shuffled on its own, so its Hunt can show up anywhere in the set. The last set's Hunt ends the game; anything under it is never played.</p></div>
+        <div class="legend"><span><b style="color:var(--moon)">Moon</b>: rule for one round</span><span><b style="color:var(--hunt)">Hunt</b>: hits everyone</span><span>Ringed: final Hunt</span></div>
+        <div id="stacks" class="deal"></div>
+        <div><h2>Sample starting hand</h2><p class="note">Random traits from the families in play.</p></div>
+        <div class="hand" id="hand"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-traits" hidden>
+    <div class="filters">
+      <input type="search" id="q" placeholder="Search names and effects" aria-label="Search traits">
+      <select id="sort" aria-label="Sort"><option value="fam">By family</option><option value="pts">By points</option><option value="name">A to Z</option></select>
+      <button class="chip" type="button" id="sigOnly" aria-pressed="false">Signatures only</button>
+    </div>
+    <div class="chips" id="famFilter" style="margin-bottom:12px"></div>
+    <div class="count" id="tcount"></div>
+    <div class="grid" id="tgrid"></div>
+  </section>
+
+  <section class="view" id="v-moons" hidden>
+    <p class="note" style="margin-bottom:12px">One Moon is flipped at the start of each round. Its rule lasts that round unless it says otherwise.</p>
+    <div class="grid" id="mgrid"></div>
+  </section>
+
+  <section class="view" id="v-hunts" hidden>
+    <p class="note" style="margin-bottom:12px">One Hunt hides in each set of the Moon deck. It hits every player when it comes up; the last one ends the game.</p>
+    <div class="grid" id="hgrid"></div>
+  </section>
+
+  <section class="view" id="v-rules" hidden>
+    <div class="rules">
+      <div><h2>Each round</h2>
+        <ol>
+          <li><b>Flip</b> the top card of the Moon deck. A Moon changes the rules for this round. A Hunt hits every player right away; if it was the last Hunt, the game ends.</li>
+          <li><b>Turns</b> go clockwise: play 1 trait from your hand onto your monster and do its effect.</li>
+          <li><b>Regen:</b> at the end of your turn, draw or discard until the cards in your hand equal your Health (never below 2). You pick which cards to discard.</li>
+        </ol>
+      </div>
+      <div><h2>Words</h2><div class="tablewrap"><table>
+        <tr><th>Word</th><th>Means</th></tr>
+        <tr><td>Trait</td><td>A monster part you play onto your monster.</td></tr>
+        <tr><td>Health (HP)</td><td>Your hand size: how many cards you Regen to.</td></tr>
+        <tr><td>Regen</td><td>End of your turn: draw or discard until your hand equals your Health.</td></tr>
+        <tr><td>Signature</td><td>A special trait. Max 1 per monster; opponents and Hunts can't remove or swap it.</td></tr>
+        <tr><td>Remove</td><td>A trait goes from a monster to the discard pile.</td></tr>
+        <tr><td>Discard</td><td>A card goes from a hand to the discard pile.</td></tr>
+      </table></div></div>
+      <div><h2>Scoring after the last Hunt</h2>
+        <ul>
+          <li>Points on your traits, plus tokens and end-of-game effects.</li>
+          <li><b>Top of the family:</b> most traits of a family = +3 (ties: +1 each).</li>
+          <li><b>Full set:</b> traits from all 6 families = +4.</li>
+          <li>Most points wins. Tie: fewer traits wins.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>/* Stitched game engine: rules, card effects and computer players. No DOM here: the page passes hooks
+   (decide for the human's choices, update/log for drawing, wait for bot pacing), and the same file runs
+   in node for the bot-vs-bot test (test.js). Card effects are read from their text, one sentence at a time. */
+(function (root) {
+  "use strict";
+  const FAM6 = ["Fang", "Ooze", "Spook", "Bone", "Scale", "Stitch"];
+  const BOT_NAMES = ["Grimble", "Mortimer", "Sludgella", "Count Bonk", "Vexa", "Old Rattles"];
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const pickRandom = (a) => a[Math.floor(Math.random() * a.length)];
+  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const splitSentences = (t) => t.replace(/\.\s+(?=[A-Z+\-])/g, ".\u0001").split("\u0001");
+  const PASSIVE = /^(End of game:|End of each round:|End of each of your turns:|Start of your turn:|If this is removed|When one of your|Whenever|The first time|Opponents can't|Opponents' |Can't be|Your |Hunts can't|You may play 1 more trait every turn|Counts as every family)/;
+
+  function createGame(DATA, settings, hooks) {
+    const H = Object.assign({ decide: null, update() {}, log() {}, wait: () => Promise.resolve() }, hooks || {});
+    let uid = 0;
+    const mk = (t) => ({ uid: ++uid, f: t.f, n: t.n, p: t.p, s: !!t.s, e: t.e });
+    const fams = settings.fams && settings.fams.length ? settings.fams : FAM6.concat("Freak");
+    const G = {
+      deck: shuffle(DATA.traits.filter((t) => fams.includes(t.f) || t.f === "Freak").map(mk)),
+      discard: [], moonDeck: [], players: [], round: 0, moon: null, lastFlip: null, huntsHit: 0,
+      huntsTotal: settings.hunts, first: 0, lastPlayed: null, over: false, moonHealth: 0,
+      unbuilt: new Set(), turnOf: null, results: null, log: [],
+    };
+
+    // players: the human (unless a bot-only test) then the computer players
+    const human = settings.human !== false;
+    const nBots = settings.cpu + (human ? 0 : 1);
+    const names = shuffle(BOT_NAMES);
+    if (human) G.players.push(newPlayer("You", false));
+    for (let i = 0; i < nBots; i++) G.players.push(newPlayer(names[i % names.length], true));
+    function newPlayer(name, bot) {
+      return { id: G.players.length, name, bot, level: settings.level || "normal", hand: [], monster: [], health: settings.app, removed: 0, last: null, extras: [], echoed: false };
+    }
+
+    // Moon deck: one set per Hunt; each set is shuffled on its own, so its Hunt can be anywhere in the set
+    (function buildMoonDeck() {
+      const hunts = shuffle(DATA.hunts).slice(0, settings.hunts);
+      let pool = [];
+      const need = settings.hunts * (settings.per - 1);
+      while (pool.length < need) pool = pool.concat(shuffle(DATA.moons));
+      hunts.forEach((h, i) => {
+        const set = pool.slice(i * (settings.per - 1), (i + 1) * (settings.per - 1)).map((m) => ({ ...m, k: "moon" }));
+        G.moonDeck.push(...shuffle(set.concat([{ ...h, k: "hunt", set: i + 1 }])));
+      });
+    })();
+
+    // ---------- small helpers ----------
+    const log = (msg) => { G.log.push(msg); if (G.log.length > 200) G.log.shift(); H.log(msg); };
+    const opps = (p) => G.players.filter((q) => q !== p);
+    const hasTrait = (p, name) => p.monster.some((e) => e.c.n === name);
+    const famOf = (e) => e.fam || e.c.f;
+    const famCnt = (p, f) => p.monster.filter((e) => famOf(e) === f).length;
+    const famCntBonus = (p, f) => p.monster.filter((e) => famOf(e) === f || e.c.n === "Mismatched Parts").length;
+    const effHealth = (p) => Math.max(2, p.health + G.moonHealth);
+    const neighbor = (p, dir) => { const n = G.players.length, i = G.players.indexOf(p); return G.players[(i + (dir === "left" ? 1 : n - 1)) % n]; };
+    const moonIs = (name) => !!(G.moon && G.moon.n === name);
+    const hasSig = (p) => p.monster.some((e) => e.c.s);
+    const cardVal = (c) => c.p + (c.s ? 1.5 : 0) + effectGuess(c) * 0.5;
+
+    function draw(p, n) {
+      const got = [];
+      for (let i = 0; i < n; i++) {
+        if (!G.deck.length) {
+          if (!G.discard.length) break;
+          G.deck = shuffle(G.discard); G.discard = [];
+          log("The trait deck ran out: the discard pile was shuffled in.");
+        }
+        got.push(G.deck.pop());
+      }
+      p.hand.push(...got);
+      return got;
+    }
+    const takeFromHand = (p, c) => { const i = p.hand.indexOf(c); if (i >= 0) p.hand.splice(i, 1); return c; };
+    const takeFromDiscard = (c) => { const i = G.discard.indexOf(c); if (i >= 0) G.discard.splice(i, 1); return c; };
+
+    // ---------- scoring ----------
+    const END = [
+      [/^\+(\d+) for each (other )?(Fang|Ooze|Spook|Bone|Scale|Stitch) trait you have(?: \(counts itself\))?(?: \(max (\d+)\))?\.$/, (p, e, m) => {
+        let n = famCnt(p, m[3]) - (m[2] && famOf(e) === m[3] ? 1 : 0); if (m[4]) n = Math.min(n, +m[4]); return +m[1] * Math.max(0, n); }],
+      [/^\+(\d+) if you have (\d+) or more (Fang|Ooze|Spook|Bone|Scale|Stitch) traits\.$/, (p, e, m) => famCnt(p, m[3]) >= +m[2] ? +m[1] : 0],
+      [/^\+(\d+) if you have (\d+) or more traits\.$/, (p, e, m) => p.monster.length >= +m[2] ? +m[1] : 0],
+      [/^-(\d+) if you have (\d+) or more traits\.$/, (p, e, m) => p.monster.length >= +m[2] ? -m[1] : 0],
+      [/^\+1 for each opponent with fewer traits than you\.$/, (p) => opps(p).filter((q) => q.monster.length < p.monster.length).length],
+      [/^\+1 for each opponent with no (\w+) traits\.$/, (p, e, m) => opps(p).filter((q) => !famCnt(q, m[1])).length],
+      [/^\+1 for each card in your hand \(max (\d+)\)\.$/, (p, e, m) => Math.min(+m[1], p.hand.length)],
+      [/^\+1 for every (\d+) cards in your hand \(max (\d+)\)\.$/, (p, e, m) => Math.min(+m[2], Math.floor(p.hand.length / +m[1]))],
+      [/^\+(\d+) if you have (\d+) or more cards in hand\.$/, (p, e, m) => p.hand.length >= +m[2] ? +m[1] : 0],
+      [/^\+1 if you have the most cards in hand\.$/, (p) => opps(p).every((q) => p.hand.length >= q.hand.length) ? 1 : 0],
+      [/^\+1 if you have the fewest cards in hand\.$/, (p) => opps(p).every((q) => p.hand.length <= q.hand.length) ? 1 : 0],
+      [/^worth the printed points of your highest-point trait \(max (\d+)\)\.$/, (p, e, m) => Math.min(+m[1], Math.max(0, ...p.monster.filter((x) => x !== e).map((x) => x.c.p)))],
+      [/^worth the printed points of one opponent's highest-point trait \(max (\d+)\)\.$/, (p, e, m) => Math.min(+m[1], Math.max(0, ...opps(p).flatMap((q) => q.monster.map((x) => x.c.p))))],
+      [/^\+(\d+) if this is your only Spook trait\.$/, (p, e, m) => famCnt(p, "Spook") === 1 && famOf(e) === "Spook" ? +m[1] : 0],
+      [/^\+(\d+) if you have fewer traits than every opponent\.$/, (p, e, m) => opps(p).every((q) => p.monster.length < q.monster.length) ? +m[1] : 0],
+      [/^\+1 for every (\d+) cards in the discard pile \(max (\d+)\)\.$/, (p, e, m) => Math.min(+m[2], Math.floor(G.discard.length / +m[1]))],
+      [/^\+(\d+) if the discard pile has (\d+) or more cards\.$/, (p, e, m) => G.discard.length >= +m[2] ? +m[1] : 0],
+      [/^\+1 for each of your traits removed this game \(max (\d+)\)\.$/, (p, e, m) => Math.min(+m[1], p.removed)],
+      [/^\+(\d+) if none of your traits were removed this game\.$/, (p, e, m) => p.removed === 0 ? +m[1] : 0],
+      [/^\+1 for each family on your monster\.$/, (p) => FAM6.filter((f) => famCnt(p, f)).length],
+      [/^\+(\d+) if (?:your monster has|you have) traits from (\d+) or more families\.$/, (p, e, m) => FAM6.filter((f) => famCntBonus(p, f)).length >= +m[2] ? +m[1] : 0],
+      [/^\+1 for each Hunt that hit while this was on your monster\.$/, (p, e) => e.seen || 0],
+      [/^\+(\d+) for each of your traits worth (\d+) or more\.$/, (p, e, m) => +m[1] * p.monster.filter((x) => x.c.p >= +m[2]).length],
+      [/^\+1 for each Signature on your monster\.$/, (p) => p.monster.filter((x) => x.c.s).length],
+      [/^\+1 for each of your traits worth (\d+) or less \(max (\d+)\)\.$/, (p, e, m) => Math.min(+m[2], p.monster.filter((x) => x.c.p <= +m[1]).length)],
+      [/^\+(\d+)\.$/, (p, e, m) => +m[1]],
+    ];
+    function endBonus(p, e) {
+      const m = /End of game: (.*)$/.exec(e.c.e);
+      if (!m) return 0;
+      for (const [re, fn] of END) { const mm = re.exec(m[1]); if (mm) return fn(p, e, mm); }
+      G.unbuilt.add("End of game: " + m[1]);
+      return 0;
+    }
+    function scoreParts(p) {
+      let base = 0, end = 0, fam = 0, full = 0;
+      for (const e of p.monster) { base += e.c.p + e.tok; end += endBonus(p, e); }
+      for (const f of FAM6) {
+        const mine = famCntBonus(p, f);
+        if (!mine) continue;
+        const counts = G.players.map((q) => famCntBonus(q, f));
+        const top = Math.max(...counts);
+        if (mine === top) fam += counts.filter((c) => c === top).length === 1 ? 3 : 1;
+      }
+      if (FAM6.every((f) => famCntBonus(p, f) > 0)) full = 4;
+      return { base, end, fam, full, total: base + end + fam + full };
+    }
+    const score = (p) => scoreParts(p).total;
+
+    // ---------- choices ----------
+    // options: [{label, value, card?, owner?, score}] (score = how good it is for the chooser; bots pick the best)
+    async function ask(p, req) {
+      const options = req.options.filter(Boolean);
+      if (!options.length) return null;
+      if (p.bot) {
+        if (p.level === "easy") {
+          if (req.optional && Math.random() < 0.3) return null;
+          return pickRandom(options).value;
+        }
+        let best = null;
+        for (const o of options) if (!best || (o.score || 0) > (best.score || 0)) best = o;
+        if (req.optional && (best.score || 0) <= (req.skipScore || 0)) return null;
+        return best.value;
+      }
+      return H.decide(p, { ...req, options });
+    }
+    const askYes = async (p, prompt, goodForBot) => (await ask(p, { kind: "yesno", prompt, optional: true, options: [{ label: "Yes", value: true, score: goodForBot ? 1 : -1 }] })) === true;
+
+    function harmScore(q) { return score(q) + q.hand.length * 0.3; }
+    async function pickOpp(p, prompt, filter, purpose) {
+      const list = opps(p).filter(filter || (() => true));
+      return ask(p, { kind: "player", prompt, options: list.map((q) => ({ label: `${q.name} (${score(q)} pts, ${plural(q.hand.length, "card")})`, value: q, score: purpose === "help" ? -harmScore(q) : harmScore(q) })) });
+    }
+    async function pickHandCard(p, prompt, filter, good, optional) {
+      const list = p.hand.filter(filter || (() => true));
+      return ask(p, { kind: "hand", src: "hand", prompt, optional, options: list.map((c) => ({ label: c.n, value: c, card: c, score: good ? cardVal(c) : -cardVal(c) })) });
+    }
+    async function pickTrait(p, prompt, entries, ownerOf, good, optional) {
+      return ask(p, { kind: "trait", prompt, optional, options: entries.map((e) => ({ label: `${e.c.n} (${e.c.p})`, value: e, card: e.c, owner: ownerOf(e).name, score: good ? e.c.p + (e.c.s ? 2 : 0) : -(e.c.p + (e.c.s ? 2 : 0)) })) });
+    }
+    async function pickPileCard(p, prompt, cards, optional) {
+      return ask(p, { kind: "pile", prompt, optional, options: cards.map((c) => ({ label: c.n, value: c, card: c, score: cardVal(c) })) });
+    }
+    const ownerOfEntry = (e) => G.players.find((q) => q.monster.includes(e));
+
+    // ---------- protection, removal, discards, steals ----------
+    function protectedFrom(owner, e, src) {
+      const t = e.c.e;
+      if (moonIs("Thick Fog")) return true;
+      if (/Can't be removed or swapped\./.test(t)) return true;
+      if (src === "self") return false;
+      if (e.c.s) return true;
+      if (src === "opp" && /Opponents can't remove this\./.test(t)) return true;
+      if (src === "hunt" && hasTrait(owner, "Phantom Shield")) return true;
+      if (famOf(e) === "Spook" && hasTrait(owner, "Poltergeist Lord")) return true;
+      if (e.c.p >= 4 && hasTrait(owner, "Elder Scale")) return true;
+      if (e.c.p <= 1 && owner.monster.some((x) => x !== e && x.c.n === "Shroud")) return true;
+      return false;
+    }
+    function swapProtected(owner, e) {
+      const t = e.c.e;
+      if (e.c.s || /Can't be removed or swapped\.|Can't be swapped\./.test(t)) return true;
+      if (hasTrait(owner, "Iron Golem")) return true;
+      if (famOf(e) === "Spook" && hasTrait(owner, "Poltergeist Lord")) return true;
+      return false;
+    }
+    const removable = (owner, src, filter) => owner.monster.filter((e) => (!filter || filter(e)) && !protectedFrom(owner, e, src));
+
+    async function removeTrait(owner, e, src, by) {
+      let target = e;
+      if (src !== "self") {
+        const mw = owner.monster.find((x) => x !== e && x.c.n === "Mummy Wraps");
+        if (mw) { log(`${owner.name}'s Mummy Wraps takes the hit for ${e.c.n}.`); target = mw; }
+      }
+      const i = owner.monster.indexOf(target);
+      if (i < 0) return;
+      owner.monster.splice(i, 1);
+      owner.removed++;
+      if (/put it back on your monster \(once\)/.test(target.c.e) && !target.unk) {
+        target.unk = true; owner.monster.push(target);
+        log(`${owner.name}'s ${target.c.n} won't stay down: it goes right back on.`);
+        return;
+      }
+      const toHand = /If this is removed, put it in your hand instead/.test(target.c.e) || hasTrait(owner, "Deathless") || hasTrait(owner, "Spare Parts Bin");
+      if (toHand) owner.hand.push(target.c); else G.discard.push(target.c);
+      log(`${owner.name} loses ${target.c.n}${toHand ? " (back to hand)" : ""}.`);
+      const lb = /If this is removed, the opponent who removed it discards (\d+)/.exec(target.c.e);
+      if (lb && by && by !== owner) await discardN(by, +lb[1], "opp", owner);
+      if (/If this is removed, each opponent discards 1 card/.test(target.c.e)) for (const q of opps(owner)) await discardN(q, 1, "opp", owner);
+      if (hasTrait(owner, "Lich Crown")) { draw(owner, 2); log(`${owner.name}'s Lich Crown: draws 2.`); }
+    }
+    async function removeOwnPick(owner, src, filter, by, prompt) {
+      const list = removable(owner, src, filter);
+      if (!list.length) return false;
+      const e = await pickTrait(owner, prompt || "Pick one of your traits to lose", list, () => owner, false);
+      if (e) await removeTrait(owner, e, src, by);
+      return !!e;
+    }
+    async function discardN(p, n, src, by) {
+      if (n <= 0 || !p.hand.length) return [];
+      if (src === "opp" && by && by !== p) {
+        if (hasTrait(p, "Glob Throne")) { log(`${p.name}'s Glob Throne: no discarding.`); return []; }
+        if (moonIs("Silent Night")) return [];
+        if (hasTrait(p, "Spongy")) draw(p, 1);
+      }
+      if (src === "hunt" && hasTrait(p, "Phantom Shield")) { log(`${p.name}'s Phantom Shield: no discarding.`); return []; }
+      n = Math.min(n, p.hand.length);
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const c = await pickHandCard(p, `Discard ${plural(n - i, "card")}`, null, false);
+        if (!c) break;
+        takeFromHand(p, c); G.discard.push(c); out.push(c);
+      }
+      if (out.length) log(`${p.name} discards ${out.map((c) => c.n).join(", ")}.`);
+      return out;
+    }
+    const stealBlocked = (q) => hasTrait(q, "Feral King") || hasTrait(q, "Glob Throne");
+    function stealRandom(p, q, n) {
+      if (stealBlocked(q)) { log(`${q.name}'s hand is protected.`); return []; }
+      const got = shuffle(q.hand).slice(0, n);
+      got.forEach((c) => { takeFromHand(q, c); p.hand.push(c); });
+      log(`${p.name} steals ${plural(got.length, "card")} from ${q.name}.`);
+      return got;
+    }
+
+    // ---------- playing a trait ----------
+    function playable(p, c, x) {
+      x = x || {};
+      if (c.s && hasSig(p)) return false;
+      if (moonIs("Rainy Night") && c.p >= 4) return false;
+      if (x.max != null && c.p > x.max) return false;
+      if (x.fam && c.f !== x.fam) return false;
+      if (x.newFam && (c.f === "Freak" || famCnt(p, c.f) > 0)) return false;
+      return true;
+    }
+    const TOKEN_MOONS = { "Dragon Season": "Scale", "Wolf Pack Night": "Fang", "Ghost Parade": "Spook", "Bone Dance": "Bone", "Ooze Flood": "Ooze", "Spark Storm": "Stitch" };
+    const DRAW_MOONS = { "Full Moon": "Fang", "Haunted House": "Spook", "Lightning Night": "Stitch", "Sewer Night": "Ooze" };
+    async function playTrait(p, c) {
+      const e = { c, tok: 0, fam: null, unk: false, seen: 0 };
+      p.monster.push(e);
+      log(`${p.name} plays ${c.n} (${c.f}, ${c.p}).`);
+      const mn = G.moon && G.moon.n;
+      if (mn && DRAW_MOONS[mn] === c.f) draw(p, 1);
+      if (mn && TOKEN_MOONS[mn] === c.f) e.tok += 1;
+      if (mn === "Freak Show" && c.f === "Freak") e.tok += 2;
+      if (mn === "Gloom" && c.p <= 1) e.tok += 1;
+      if (mn === "Graveyard Shift" && c.f === "Bone" && G.discard.length) {
+        const t = await pickPileCard(p, "Graveyard Shift: take 1 card from the discard pile", G.discard.slice(), true);
+        if (t) { takeFromDiscard(t); p.hand.push(t); }
+      }
+      H.update();
+      if (mn !== "New Moon") {
+        await runPlay(p, c, e, 0);
+        if (mn === "Echoing Halls" && !p.echoed && !G.over) { p.echoed = true; log(`Echoing Halls: ${c.n} goes again.`); await runPlay(p, c, e, 0); }
+      }
+      p.echoed = true;
+      G.lastPlayed = c; p.last = c;
+      H.update();
+    }
+
+    async function runPlay(p, c, e, depth) {
+      if (depth > 2 || c.e === "-") return;
+      const x = { p, c, e, depth, drawn: [], discarded: [] };
+      for (let s of splitSentences(c.e)) {
+        if (s.startsWith("When played: ")) s = s.slice(13);
+        else if (PASSIVE.test(s)) continue;
+        let hit = false;
+        for (const [re, fn] of PLAY) {
+          const m = re.exec(s);
+          if (m) { hit = true; await fn(x, m); break; }
+        }
+        if (!hit) { G.unbuilt.add(s); log(`(${c.n}: "${s}" isn't built yet, skipped)`); }
+        if (G.over) return;
+      }
+    }
+    const capeBonus = (x) => x.c.f === "Fang" && hasTrait(x.p, "Count's Cape") ? 1 : 0;
+    const removeTarget = (x) => (q) => !hasTrait(q, "Wraith Veil");
+    async function oppRemoves(x, filterFn, how, prompt, pickFilter) {
+      const q = await pickOpp(x.p, prompt, (q) => removeTarget(x)(q) && (!pickFilter || pickFilter(q)) && removable(q, "opp", filterFn).length > 0);
+      if (!q) { log(`${x.c.n}: no one has a trait it can remove.`); return; }
+      let list = removable(q, "opp", filterFn);
+      if (how === "lowest") { const lo = Math.min(...list.map((e) => e.c.p)); list = list.filter((e) => e.c.p === lo); }
+      if (how === "highest") { const hi = Math.max(...list.map((e) => e.c.p)); list = list.filter((e) => e.c.p === hi); }
+      const e = await pickTrait(q, `${x.p.name}'s ${x.c.n}: pick one of your traits to lose`, list, () => q, false);
+      if (e) await removeTrait(q, e, "opp", x.p);
+    }
+    async function playFromDiscard(x, max) {
+      const list = G.discard.filter((c) => playable(x.p, c, { max }));
+      const c = await pickPileCard(x.p, `Play a trait${max != null ? ` worth ${max} or less` : ""} from the discard pile`, list, false);
+      if (c) { takeFromDiscard(c); await playTrait(x.p, c); }
+    }
+    async function passCards(n, dir, by) {
+      const picks = [];
+      for (const q of G.players) {
+        const out = [];
+        for (let i = 0; i < Math.min(n, q.hand.length); i++) {
+          const c = await pickHandCard(q, `Pass ${plural(n - i, "card")} to the ${dir}`, (c) => !out.includes(c), false);
+          if (c) out.push(c);
+        }
+        picks.push([q, out]);
+      }
+      for (const [q, out] of picks) { out.forEach((c) => takeFromHand(q, c)); neighbor(q, dir).hand.push(...out); }
+      log(`Everyone passes ${plural(n, "card")} to the ${dir}.`);
+    }
+    function passHands(dir) {
+      const hands = G.players.map((q) => q.hand);
+      G.players.forEach((q, i) => { neighbor(q, dir).hand = hands[i]; });
+      log(`Everyone passes their whole hand to the ${dir}.`);
+    }
+    async function passTraits(dir, src) {
+      const picks = [];
+      for (const q of G.players) {
+        const list = q.monster.filter((e) => !e.c.s && !protectedFrom(q, e, src));
+        const e = list.length ? await pickTrait(q, `Pick a trait to pass to the ${dir}`, list, () => q, false) : null;
+        picks.push([q, e]);
+      }
+      for (const [q, e] of picks) if (e) { q.monster.splice(q.monster.indexOf(e), 1); neighbor(q, dir).monster.push(e); }
+      log(`Everyone passes a trait to the ${dir}.`);
+    }
+    async function lookTop(p, n, k) {
+      if (G.deck.length < n && G.discard.length) { G.deck = shuffle(G.discard).concat(G.deck); G.discard = []; }
+      const top = G.deck.slice(-n);
+      const took = [];
+      for (let i = 0; i < k && top.length; i++) {
+        const c = await pickPileCard(p, `Take ${k - i} of the top ${n} trait cards`, top.filter((t) => !took.includes(t)), false);
+        if (c) took.push(c);
+      }
+      G.deck = G.deck.filter((c) => !top.includes(c));
+      p.hand.push(...took);
+      G.deck.unshift(...top.filter((c) => !took.includes(c)));
+      log(`${p.name} looks at the top ${n} trait cards and takes ${plural(took.length, "card")}.`);
+    }
+    async function swapWithOpp(x, maxOwn) {
+      const mine = x.p.monster.filter((e) => !swapProtected(x.p, e) && (maxOwn == null || e.c.p <= maxOwn));
+      const theirs = opps(x.p).flatMap((q) => q.monster.filter((e) => !swapProtected(q, e)));
+      if (!mine.length || !theirs.length) { log(`${x.c.n}: nothing can be swapped.`); return; }
+      const t = await pickTrait(x.p, "Swap: pick an opponent's trait to take", theirs, ownerOfEntry, true);
+      const m = t && await pickTrait(x.p, `Swap: pick one of your traits to give for ${t.c.n}`, mine, () => x.p, false);
+      if (!t || !m) return;
+      const q = ownerOfEntry(t);
+      q.monster.splice(q.monster.indexOf(t), 1, m);
+      x.p.monster.splice(x.p.monster.indexOf(m), 1, t);
+      log(`${x.p.name} swaps ${m.c.n} for ${q.name}'s ${t.c.n}.`);
+    }
+    const copyTargets = {
+      "the last trait anyone played": (x) => G.lastPlayed && G.lastPlayed !== x.c ? [G.lastPlayed] : [],
+      "the last trait you played": (x) => x.p.last && x.p.last !== x.c ? [x.p.last] : [],
+      "another trait on your monster": (x) => x.p.monster.filter((e) => e !== x.e && hasPlayEffect(e.c)).map((e) => e.c),
+      "a trait on an opponent's monster": (x) => opps(x.p).flatMap((q) => q.monster.filter((e) => hasPlayEffect(e.c)).map((e) => e.c)),
+    };
+    const hasPlayEffect = (c) => c.e !== "-" && splitSentences(c.e).some((s) => s.startsWith("When played: ") || !PASSIVE.test(s));
+
+    const PLAY = [
+      [/^Draw (\d+) cards?, then discard (\d+) cards?\.$/, async (x, m) => { x.drawn = draw(x.p, +m[1]); await discardN(x.p, +m[2], "self"); }],
+      [/^Draw 1 card for each card discarded\.$/, async (x) => { draw(x.p, x.discarded.length); }],
+      [/^Draw 1 card for each (\w+) trait you have \(max (\d+)\)\.$/, async (x, m) => { draw(x.p, Math.min(+m[2], famCnt(x.p, m[1]))); }],
+      [/^Draw 1 card for every (\d+) cards in the discard pile \(max (\d+)\)\.$/, async (x, m) => { draw(x.p, Math.min(+m[2], Math.floor(G.discard.length / +m[1]))); }],
+      [/^Draw (\d+) (?:more )?cards?\.$/, async (x, m) => { x.drawn = draw(x.p, +m[1]); }],
+      [/^You may play it right away\.$/, async (x) => {
+        const c = x.drawn[0];
+        if (c && x.p.hand.includes(c) && playable(x.p, c) && await askYes(x.p, `Play ${c.n} now?`, cardVal(c) > 1)) { takeFromHand(x.p, c); await playTrait(x.p, c); }
+      }],
+      [/^Each opponent discards 1 card for each (\w+) trait you have \(max (\d+)\)\.$/, async (x, m) => {
+        const n = Math.min(+m[2], famCnt(x.p, m[1])) + capeBonus(x);
+        for (const q of opps(x.p)) await discardN(q, n, "opp", x.p);
+      }],
+      [/^Each opponent discards (\d+) cards?\.$/, async (x, m) => { for (const q of opps(x.p)) await discardN(q, +m[1] + capeBonus(x), "opp", x.p); }],
+      [/^One opponent discards 1 card and gets -1 Health\.$/, async (x) => {
+        const q = await pickOpp(x.p, `${x.c.n}: pick an opponent`);
+        if (q) { await discardN(q, 1 + capeBonus(x), "opp", x.p); q.health -= 1; log(`${q.name} gets -1 Health.`); }
+      }],
+      [/^One opponent discards (\d+) cards?\.$/, async (x, m) => {
+        const q = await pickOpp(x.p, `${x.c.n}: pick an opponent to discard`, (q) => q.hand.length > 0);
+        if (q) await discardN(q, +m[1] + capeBonus(x), "opp", x.p);
+      }],
+      [/^The player on your (left|right) discards (\d+) cards?\.$/, async (x, m) => { await discardN(neighbor(x.p, m[1]), +m[2] + capeBonus(x), "opp", x.p); }],
+      [/^Every player discards (\d+) cards?(?: \(you too\))?\.$/, async (x, m) => {
+        for (const q of G.players) x.discarded.push(...await discardN(q, +m[1], q === x.p ? "self" : "opp", x.p));
+      }],
+      [/^Take 1 of those cards into your hand\.$/, async (x) => {
+        const c = await pickPileCard(x.p, "Take 1 of the discarded cards", x.discarded.filter((c) => G.discard.includes(c)), false);
+        if (c) { takeFromDiscard(c); x.p.hand.push(c); }
+      }],
+      [/^Steal (\d+) random cards? from one opponent(?:, then discard (\d+) cards?)?\.$/, async (x, m) => {
+        const q = await pickOpp(x.p, `${x.c.n}: steal from whom?`, (q) => q.hand.length > 0 && !stealBlocked(q));
+        if (q) stealRandom(x.p, q, +m[1]);
+        if (m[2]) await discardN(x.p, +m[2], "self");
+      }],
+      [/^Look at an opponent's hand and take 1 card\.$/, async (x) => {
+        const q = await pickOpp(x.p, `${x.c.n}: look at whose hand?`, (q) => q.hand.length > 0 && !stealBlocked(q));
+        if (!q) return;
+        const c = await pickPileCard(x.p, `Take 1 card from ${q.name}'s hand`, q.hand.slice(), false);
+        if (c) { takeFromHand(q, c); x.p.hand.push(c); log(`${x.p.name} takes a card from ${q.name}'s hand.`); }
+      }],
+      [/^(?:Look at every opponent's hand|Every opponent shows you their hand)\.$/, async (x) => {
+        if (!x.p.bot) log(opps(x.p).map((q) => `${q.name}: ${q.hand.map((c) => c.n).join(", ") || "no cards"}`).join(" | "));
+      }],
+      [/^Take 1 card from one of them\.$/, async (x) => {
+        const pool = opps(x.p).filter((q) => !stealBlocked(q)).flatMap((q) => q.hand);
+        const c = await pickPileCard(x.p, "Take 1 card from an opponent's hand", pool, false);
+        if (c) { const q = G.players.find((q) => q.hand.includes(c)); takeFromHand(q, c); x.p.hand.push(c); log(`${x.p.name} takes a card from ${q.name}.`); }
+      }],
+      [/^One opponent with more traits than you removes one of their traits worth (\d+) or less\.$/, async (x, m) => {
+        await oppRemoves(x, (e) => e.c.p <= +m[1], "pick", `${x.c.n}: pick an opponent`, (q) => q.monster.length > x.p.monster.length);
+      }],
+      [/^One opponent removes one of their traits worth (\d+) or less\.$/, async (x, m) => { await oppRemoves(x, (e) => e.c.p <= +m[1], "pick", `${x.c.n}: pick an opponent`); }],
+      [/^One opponent removes their lowest-point trait\.$/, async (x) => { await oppRemoves(x, null, "lowest", `${x.c.n}: pick an opponent`); }],
+      [/^One opponent removes their highest-point trait worth (\d+) or less\.$/, async (x, m) => { await oppRemoves(x, (e) => e.c.p <= +m[1], "highest", `${x.c.n}: pick an opponent`); }],
+      [/^each opponent removes one of their traits worth (\d+) or less\.$/i, async (x, m) => {
+        for (const q of opps(x.p)) if (removeTarget(x)(q)) await removeOwnPick(q, "opp", (e) => e.c.p <= +m[1], x.p, `${x.p.name}'s ${x.c.n}: pick a trait to lose`);
+      }],
+      [/^each opponent removes their lowest-point trait\.$/i, async (x) => {
+        for (const q of opps(x.p)) {
+          if (!removeTarget(x)(q)) continue;
+          const list = removable(q, "opp");
+          if (!list.length) continue;
+          const lo = Math.min(...list.map((e) => e.c.p));
+          await removeOwnPick(q, "opp", (e) => e.c.p === lo, x.p, `${x.p.name}'s ${x.c.n}: pick a trait to lose`);
+        }
+      }],
+      [/^Every player removes one of their traits worth (\d+) or less \(you too\)\.$/, async (x, m) => {
+        for (const q of G.players) if (q === x.p || removeTarget(x)(q)) await removeOwnPick(q, q === x.p ? "self" : "opp", (e) => e.c.p <= +m[1] && e !== x.e, x.p);
+      }],
+      [/^([+-]\d+) Health\.$/, async (x, m) => { x.p.health += +m[1]; log(`${x.p.name}: ${m[1]} Health (now ${effHealth(x.p)}).`); }],
+      [/^One opponent gets -1 Health\.$/, async (x) => { const q = await pickOpp(x.p, `${x.c.n}: who gets -1 Health?`); if (q) { q.health -= 1; log(`${q.name} gets -1 Health.`); } }],
+      [/^Each opponent gets -1 Health\.$/, async (x) => { opps(x.p).forEach((q) => { q.health -= 1; }); log(`Each opponent of ${x.p.name} gets -1 Health.`); }],
+      [/^Every player gets \+1 Health\.$/, async () => { G.players.forEach((q) => { q.health += 1; }); log("Every player gets +1 Health."); }],
+      [/^You get \+1 more\.$/, async (x) => { x.p.health += 1; }],
+      [/^You may play 1 more trait(?: worth (\d+) or less)?\.$/, async (x, m) => { x.p.extras.push({ max: m[1] != null ? +m[1] : null, why: x.c.n }); }],
+      [/^It must be a (\w+) trait\.$/, async (x, m) => { const last = x.p.extras[x.p.extras.length - 1]; if (last) last.fam = m[1]; }],
+      [/^Take a trait worth (\d+) or less from the discard pile into your hand\.$/, async (x, m) => {
+        const c = await pickPileCard(x.p, `Take a trait worth ${m[1]} or less from the discard pile`, G.discard.filter((c) => c.p <= +m[1]), false);
+        if (c) { takeFromDiscard(c); x.p.hand.push(c); }
+      }],
+      [/^Take any (\d+) cards? from the discard pile into your hand(?:, then discard (\d+) cards)?\.$/, async (x, m) => {
+        for (let i = 0; i < +m[1]; i++) {
+          const c = await pickPileCard(x.p, `Take ${plural(+m[1] - i, "card")} from the discard pile`, G.discard.slice(), false);
+          if (!c) break;
+          takeFromDiscard(c); x.p.hand.push(c);
+        }
+        if (m[2]) await discardN(x.p, +m[2], "self");
+      }],
+      [/^Play a trait(?: worth (\d+) or less)? from the discard pile\.$/, async (x, m) => { await playFromDiscard(x, m[1] != null ? +m[1] : null); }],
+      [/^play up to 2 traits worth 2 or less from the discard pile\.$/i, async (x) => {
+        for (let i = 0; i < 2; i++) {
+          const list = G.discard.filter((c) => playable(x.p, c, { max: 2 }));
+          const c = await pickPileCard(x.p, "Play a trait worth 2 or less from the discard pile", list, true);
+          if (!c) break;
+          takeFromDiscard(c); await playTrait(x.p, c);
+        }
+      }],
+      [/^Swap one of your traits with one of an opponent's\.$/, async (x) => { await swapWithOpp(x, null); }],
+      [/^Swap one of your traits worth (\d+) or less with one on an opponent's monster\.$/, async (x, m) => { await swapWithOpp(x, +m[1]); }],
+      [/^Swap a trait between two opponents' monsters\.$/, async (x) => {
+        const all = opps(x.p).flatMap((q) => q.monster.filter((e) => !swapProtected(q, e)));
+        const a = await pickTrait(x.p, "Pick the first trait to swap", all, ownerOfEntry, false);
+        if (!a) return;
+        const qa = ownerOfEntry(a);
+        const b = await pickTrait(x.p, `Swap ${a.c.n} with`, all.filter((e) => ownerOfEntry(e) !== qa), ownerOfEntry, true);
+        if (!b) return;
+        const qb = ownerOfEntry(b);
+        qa.monster.splice(qa.monster.indexOf(a), 1, b);
+        qb.monster.splice(qb.monster.indexOf(b), 1, a);
+        log(`${x.p.name} swaps ${qa.name}'s ${a.c.n} with ${qb.name}'s ${b.c.n}.`);
+      }],
+      [/^Swap one of your traits with a trait in the discard pile\.$/, async (x) => {
+        const mine = x.p.monster.filter((e) => !swapProtected(x.p, e));
+        const pile = G.discard.filter((c) => !c.s);
+        const t = await pickPileCard(x.p, "Pick a trait from the discard pile to take", pile, false);
+        const m = t && await pickTrait(x.p, `Give which trait for ${t.n}?`, mine, () => x.p, false);
+        if (!t || !m) return;
+        takeFromDiscard(t);
+        x.p.monster.splice(x.p.monster.indexOf(m), 1, { c: t, tok: 0, fam: null, unk: false, seen: 0 });
+        G.discard.push(m.c);
+        log(`${x.p.name} swaps ${m.c.n} for ${t.n} from the discard pile.`);
+      }],
+      [/^Move one trait worth (\d+) or less from an opponent's monster onto yours\.$/, async (x, m) => {
+        const list = opps(x.p).flatMap((q) => removable(q, "opp", (e) => e.c.p <= +m[1] && !e.c.s).filter(() => removeTarget(x)(q)));
+        const e = await pickTrait(x.p, `Take a trait worth ${m[1]} or less`, list, ownerOfEntry, true);
+        if (!e) { log(`${x.c.n}: nothing to take.`); return; }
+        const q = ownerOfEntry(e);
+        q.monster.splice(q.monster.indexOf(e), 1); x.p.monster.push(e);
+        log(`${x.p.name} takes ${e.c.n} from ${q.name}.`);
+      }],
+      [/^Every player passes their whole hand to the left\.$/, async () => { passHands("left"); }],
+      [/^Every player passes (\d+) cards? to the left\.$/, async (x, m) => { await passCards(+m[1], "left", x.p); }],
+      [/^look at the top (\d+) trait cards, take (\d+)(?:, put the rest on the bottom)?\.$/i, async (x, m) => { await lookTop(x.p, +m[1], +m[2]); }],
+      [/^Discard (\d+) cards?, then draw (\d+) cards?\.$/, async (x, m) => { await discardN(x.p, +m[1], "self"); draw(x.p, +m[2]); }],
+      [/^Discard any number of cards, then draw that many \+1\.$/, async (x) => {
+        let n = 0;
+        for (;;) {
+          const c = await pickHandCard(x.p, `Discard as many cards as you like (${n} so far), then draw that many +1`, null, false, true);
+          if (!c || (x.p.bot && cardVal(c) > 1.5)) break;
+          takeFromHand(x.p, c); G.discard.push(c); n++;
+        }
+        draw(x.p, n + 1); log(`${x.p.name} swaps ${plural(n, "card")} and draws ${n + 1}.`);
+      }],
+      [/^Discard your hand, then draw that many cards \+1\.$/, async (x) => { const n = x.p.hand.length; G.discard.push(...x.p.hand); x.p.hand = []; draw(x.p, n + 1); log(`${x.p.name} throws out their hand and draws ${n + 1}.`); }],
+      [/^Discard (\d+) cards?(?: from your hand)?\.$/, async (x, m) => { await discardN(x.p, +m[1], "self"); }],
+      [/^Remove one of your other traits\.$/, async (x) => { await removeOwnPick(x.p, "self", (e) => e !== x.e, null, `${x.c.n}: pick one of your other traits to lose`); }],
+      [/^Return one of your other traits to your hand\.$/, async (x) => {
+        const list = x.p.monster.filter((e) => e !== x.e);
+        const e = await pickTrait(x.p, `${x.c.n}: return one of your traits to your hand`, list, () => x.p, false);
+        if (e) { x.p.monster.splice(x.p.monster.indexOf(e), 1); x.p.hand.push(e.c); log(`${x.p.name} returns ${e.c.n} to their hand.`); }
+      }],
+      [/^Trade hands with one opponent\.$/, async (x) => {
+        const q = await pickOpp(x.p, `${x.c.n}: trade hands with whom?`, (q) => !stealBlocked(q));
+        if (!q || (x.p.bot && q.hand.length <= x.p.hand.length)) return;
+        [x.p.hand, q.hand] = [q.hand, x.p.hand];
+        log(`${x.p.name} trades hands with ${q.name}.`);
+      }],
+      [/^Each opponent gives you 1 card of their choice\.$/, async (x) => {
+        for (const q of opps(x.p)) {
+          if (!q.hand.length || stealBlocked(q)) continue;
+          const c = await pickHandCard(q, `${x.p.name}'s ${x.c.n}: give them 1 card`, null, false);
+          if (c) { takeFromHand(q, c); x.p.hand.push(c); }
+        }
+        log(`Each opponent gives ${x.p.name} a card.`);
+      }],
+      [/^Do the "When played" effect of (.+)\.$/, async (x, m) => {
+        const list = (copyTargets[m[1]] || (() => []))(x);
+        if (!list.length) { log(`${x.c.n}: nothing to copy.`); return; }
+        const c = list.length === 1 ? list[0] : await pickPileCard(x.p, "Copy which trait's effect?", list, false);
+        if (c) { log(`${x.p.name} copies ${c.n}.`); await runPlay(x.p, c, x.e, x.depth + 1); }
+      }],
+      [/^choose a family\.$/i, async (x) => {
+        const f = await ask(x.p, { kind: "family", prompt: `${x.c.n}: pick a family for it`, options: FAM6.map((f) => { x.e.fam = f; const s = score(x.p); x.e.fam = null; return { label: f, value: f, score: s }; }) });
+        x.e.fam = f || "Fang";
+        log(`${x.p.name}'s ${x.c.n} becomes ${x.e.fam}.`);
+      }],
+      [/^This trait counts as that family\.$/, async () => {}],
+      [/^Every player draws 1 card\.$/, async () => { G.players.forEach((q) => draw(q, 1)); }],
+    ];
+
+    // ---------- Hunts ----------
+    const byScore = () => G.players.slice().sort((a, b) => score(b) - score(a));
+    async function eachPlayer(fn) { for (const q of turnOrder()) { await fn(q); if (G.over) return; } }
+    const HUNTS = {
+      "Torch Mob": () => eachPlayer((q) => removeOwnPick(q, "hunt", null)),
+      "Holy Water": () => eachPlayer(async (q) => { const l = removable(q, "hunt"); if (!l.length) return; const hi = Math.max(...l.map((e) => e.c.p)); await removeOwnPick(q, "hunt", (e) => e.c.p === hi); }),
+      "Monster Hunters": async () => { const q = byScore()[0]; log(`The hunters go after ${q.name}.`); await removeOwnPick(q, "hunt", null); await removeOwnPick(q, "hunt", null); },
+      "Sunrise": () => eachPlayer(async (q) => { if (!famCnt(q, "Spook") && q.hand.length > 3) await discardN(q, q.hand.length - 3, "hunt"); }),
+      "Exorcism": async () => { await eachPlayer((q) => discardN(q, 2, "hunt")); G.players.forEach((q) => { if (famCnt(q, "Bone")) draw(q, 1); }); },
+      "Mad Scientist": () => passTraits("left", "hunt"),
+      "Silver Bullets": () => eachPlayer((q) => removeOwnPick(q, "hunt", (e) => famOf(e) === "Fang")),
+      "Salt Circle": () => eachPlayer((q) => removeOwnPick(q, "hunt", (e) => famOf(e) === "Ooze")),
+      "Ghost Trap": () => eachPlayer((q) => removeOwnPick(q, "hunt", (e) => famOf(e) === "Spook")),
+      "Holy Ground": () => eachPlayer((q) => removeOwnPick(q, "hunt", (e) => famOf(e) === "Bone")),
+      "Dragon Slayer": () => eachPlayer((q) => removeOwnPick(q, "hunt", (e) => famOf(e) === "Scale")),
+      "Lightning Strike": () => eachPlayer((q) => removeOwnPick(q, "hunt", (e) => famOf(e) === "Stitch")),
+      "Garlic Fog": async () => { G.players.forEach((q) => { q.health -= 1; }); },
+      "Wooden Stakes": () => eachPlayer(async (q) => { const l = removable(q, "hunt"); if (!l.length) return; const lo = Math.min(...l.map((e) => e.c.p)); await removeOwnPick(q, "hunt", (e) => e.c.p === lo); }),
+      "Witch Hunt": async () => { const most = Math.max(...G.players.map((q) => q.monster.length)); const q = G.players.find((q) => q.monster.length === most); await removeOwnPick(q, "hunt", null); opps(q).forEach((r) => draw(r, 1)); },
+      "Bounty Posters": async () => { const q = byScore()[0]; await discardN(q, q.hand.length, "hunt"); },
+      "Burning Barn": () => eachPlayer((q) => discardN(q, Math.floor(q.hand.length / 2), "hunt")),
+      "Mirror Maze": () => passTraits("right", "hunt"),
+      "Church Bells": () => eachPlayer((q) => removeOwnPick(q, "hunt", (e) => e.c.p <= 2)),
+      "Village Watch": () => eachPlayer(async (q) => { if (q.monster.length >= 6) { await removeOwnPick(q, "hunt", null); await removeOwnPick(q, "hunt", null); } }),
+      "Hunting Hounds": () => eachPlayer(async (q) => { if (q.hand.length < 3) await removeOwnPick(q, "hunt", null); }),
+      "Daylight Raid": () => eachPlayer((q) => discardN(q, 2, "hunt")),
+      "Monster Zoo": async () => { const s = byScore(); const low = s[s.length - 1]; draw(low, 3); for (const q of opps(low)) await discardN(q, 1, "hunt"); },
+      "Lab Fire": () => eachPlayer((q) => removeOwnPick(q, "hunt", (e) => /End of game:/.test(e.c.e))),
+      "Crossbows": () => eachPlayer((q) => removeOwnPick(q, "hunt", (e) => e.c.p >= 3 && !e.c.s)),
+      "Trap Pit": () => eachPlayer(async (q) => { if (famCnt(q, "Scale")) await discardN(q, 2, "hunt"); }),
+      "Witch's Curse": async () => passHands("right"),
+      "Grand Inquisitor": () => eachPlayer(async (q) => {
+        if (hasTrait(q, "Phantom Shield")) return;
+        const out = q.hand.filter((c) => c.p >= 3);
+        out.forEach((c) => { takeFromHand(q, c); G.discard.push(c); });
+        if (out.length) log(`${q.name} discards ${out.map((c) => c.n).join(", ")}.`);
+      }),
+      "Full Eclipse": () => eachPlayer(async (q) => { await removeOwnPick(q, "hunt", null); await discardN(q, 1, "hunt"); }),
+      "Angry Villagers": () => eachPlayer(async (q) => { for (let i = 0; i < Math.floor(q.monster.length / 5); i++) await removeOwnPick(q, "hunt", null); }),
+    };
+
+    // ---------- Moons (start-of-round effects; the rest are checked where they apply) ----------
+    const MOONS = {
+      "Feeding Time": async () => { G.players.forEach((q) => draw(q, 2)); },
+      "Thunderstorm": async () => passHands("left"),
+      "Slime Season": async () => { G.moonHealth = 1; },
+      "Hungry Night": async () => { G.moonHealth = -1; },
+      "Blood Moon": () => eachPlayer((q) => discardN(q, 1, "self")),
+      "Lost Souls": () => eachPlayer(async (q) => {
+        let n = 0;
+        for (;;) { const c = await pickHandCard(q, `Lost Souls: discard cards to redraw (${n} so far)`, null, false, true); if (!c || (q.bot && cardVal(c) > 1)) break; takeFromHand(q, c); G.discard.push(c); n++; }
+        draw(q, n);
+      }),
+      "Creaky Floors": () => passCards(1, "right"),
+      "Bat Swarm": () => eachPlayer(async (q) => { draw(q, 1); await discardN(q, 1, "self"); }),
+      "Crypt Opens": () => eachPlayer(async (q) => { const c = await pickPileCard(q, "Crypt Opens: take 1 card from the discard pile", G.discard.slice(), false); if (c) { takeFromDiscard(c); q.hand.push(c); } }),
+      "Swap Meet": () => passTraits("left", "moon"),
+      "Moonlit Feast": async () => { G.players.forEach((q) => draw(q, Math.min(3, FAM6.filter((f) => famCnt(q, f)).length))); },
+      "Howling Wind": () => eachPlayer(async (q) => { if (q.hand.length > 4) await discardN(q, q.hand.length - 4, "self"); }),
+      "Nightmare": async () => { const q = byScore()[0]; await discardN(q, 2, "self"); },
+      "Underdog Moon": async () => { const s = byScore(); draw(s[s.length - 1], 3); },
+      "Cursed Coins": () => passCards(2, "left"),
+      "Lab Accident": async () => passHands("right"),
+      "Bonfire Night": () => eachPlayer(async (q) => {
+        const list = q.monster.filter((e) => !protectedFrom(q, e, "self"));
+        const e = await pickTrait(q, "Bonfire Night: lose a trait to draw 3? (optional)", list, () => q, false, true);
+        if (e && (!q.bot || e.c.p <= 0)) { await removeTrait(q, e, "self", null); draw(q, 3); }
+      }),
+      "Hunter's Moon": async () => { const nx = G.moonDeck[0]; if (nx) log(`Hunter's Moon: the next card is ${nx.k === "hunt" ? "the Hunt " : "the Moon "}${nx.n}.`); },
+      "Crow Call": () => eachPlayer((q) => lookTop(q, 2, 1)),
+      "Wishing Well": () => eachPlayer(async (q) => {
+        if (q.hand.length < 2 || !G.discard.length) return;
+        const want = await pickPileCard(q, "Wishing Well: discard 2 cards to take this one? (optional)", G.discard.slice(), true);
+        if (!want || (q.bot && cardVal(want) < 3)) return;
+        await discardN(q, 2, "self"); takeFromDiscard(want); q.hand.push(want);
+      }),
+      "Tug of War": async () => {
+        const s = G.players.slice().sort((a, b) => b.hand.length - a.hand.length);
+        const rich = s[0], poor = s[s.length - 1];
+        if (rich === poor || !rich.hand.length) return;
+        const c = await pickHandCard(rich, `Tug of War: give 1 card to ${poor.name}`, null, false);
+        if (c) { takeFromHand(rich, c); poor.hand.push(c); }
+      },
+      "Night Market": () => eachPlayer(async (q) => { draw(q, 3); await discardN(q, 2, "self"); }),
+      "Witch's Brew": async () => { G.players.forEach((q) => { q.health += 1; }); },
+      "Empty Hands": async () => { G.players.forEach((q) => { if (q.hand.length <= 2) draw(q, 3); }); },
+      "Dead of Night": async () => { G.players.forEach((q) => { G.discard.push(...q.hand); q.hand = []; draw(q, effHealth(q)); }); },
+      "Cobweb Night": () => eachPlayer(async (q) => {
+        if (q.bot) return;
+        const e = await pickTrait(q, "Cobweb Night: return one of your traits to your hand? (optional)", q.monster.slice(), () => q, false, true);
+        if (e) { q.monster.splice(q.monster.indexOf(e), 1); q.hand.push(e.c); }
+      }),
+      "Shooting Star": async () => { G.players.forEach((q) => draw(q, 1)); },
+      "Midnight Bell": async () => { G.players.forEach((q) => draw(q, 1)); },
+    };
+
+    // ---------- turns and rounds ----------
+    function turnOrder() {
+      const n = G.players.length, out = [];
+      for (let i = 0; i < n; i++) out.push(G.players[(G.first + (moonIs("Eclipse") ? n - i : i)) % n]);
+      return out;
+    }
+    async function mainPlay(p) {
+      if (moonIs("Mirror Moon")) {
+        const c = draw(p, 1)[0];
+        if (!c) return;
+        takeFromHand(p, c);
+        if (playable(p, c)) { log(`Mirror Moon: ${p.name} plays the top card.`); await playTrait(p, c); }
+        else { G.discard.push(c); log(`Mirror Moon: ${p.name} flips ${c.n} but can't play it.`); }
+        return;
+      }
+      const hand = p.hand.filter((c) => playable(p, c));
+      const pile = moonIs("Grave Robbing") ? G.discard.filter((c) => playable(p, c)) : [];
+      if (!hand.length && !pile.length) { log(`${p.name} has nothing they can play.`); return; }
+      const opts = hand.map((c) => ({ label: c.n, value: c, card: c, score: playValue(p, c) }))
+        .concat(pile.map((c) => ({ label: `${c.n} (from discard pile)`, value: c, card: c, score: playValue(p, c), fromPile: true })));
+      const c = await ask(p, { kind: "play", src: "hand", prompt: pile.length ? "Your turn: play a trait (Grave Robbing: the discard pile is open too)" : "Your turn: play a trait", options: opts });
+      if (!c) return;
+      if (p.hand.includes(c)) takeFromHand(p, c); else takeFromDiscard(c);
+      await playTrait(p, c);
+    }
+    async function extraPlay(p, x) {
+      const list = p.hand.filter((c) => playable(p, c, x));
+      if (!list.length) return;
+      const what = [x.max != null ? `worth ${x.max} or less` : "", x.fam ? `${x.fam} only` : "", x.newFam ? "from a family you don't have" : ""].filter(Boolean).join(", ");
+      const c = await ask(p, { kind: "play", src: "hand", optional: true, skipScore: -0.5, prompt: `${x.why}: play 1 more trait?${what ? ` (${what})` : ""}`, options: list.map((c) => ({ label: c.n, value: c, card: c, score: playValue(p, c) })) });
+      if (c) { takeFromHand(p, c); await playTrait(p, c); }
+    }
+    function regen(p) {
+      const want = effHealth(p);
+      if (p.hand.length < want) { const got = draw(p, want - p.hand.length); if (got.length) log(`${p.name} Regens: draws ${got.length}.`); }
+    }
+    async function regenDown(p) {
+      const want = effHealth(p);
+      if (p.hand.length > want) await discardN(p, p.hand.length - want, "self");
+    }
+    async function turn(p) {
+      if (G.over) return;
+      G.turnOf = p; H.update();
+      if (p.bot) await H.wait(1);
+      if (hasTrait(p, "Night Stalker")) { const rich = opps(p).filter((q) => q.hand.length && !stealBlocked(q)).sort((a, b) => b.hand.length - a.hand.length)[0]; if (rich) stealRandom(p, rich, 1); }
+      if (hasTrait(p, "Necro Staff") && G.discard.length) { const c = await pickPileCard(p, "Necro Staff: take 1 card from the discard pile", G.discard.slice(), false); if (c) { takeFromDiscard(c); p.hand.push(c); } }
+      if (hasTrait(p, "Grim Lantern")) draw(p, 1);
+      if (hasTrait(p, "Lightning Rod")) draw(p, Math.min(3, G.huntsHit));
+      p.extras = [];
+      if (hasTrait(p, "Mad Genius")) p.extras.push({ max: null, why: "Mad Genius" });
+      if (moonIs("Witching Hour")) p.extras.push({ max: null, why: "Witching Hour" });
+      if (moonIs("Midnight Snack") && G.players.every((q) => p.monster.length <= q.monster.length)) p.extras.push({ max: null, why: "Midnight Snack" });
+      if (moonIs("Monster Prom")) p.extras.push({ max: null, newFam: true, why: "Monster Prom" });
+      if (moonIs("Shooting Star")) p.extras.push({ max: null, why: "Shooting Star" });
+      await mainPlay(p);
+      let guard = 0;
+      while (p.extras.length && !G.over && guard++ < 10) { const x = p.extras.shift(); await extraPlay(p, x); }
+      p.extras = [];
+      if (G.over) return;
+      regen(p); await regenDown(p);
+      if (hasTrait(p, "Clockwork")) draw(p, 1);
+      if (moonIs("Harvest Moon")) draw(p, 1);
+      H.update();
+      if (p.bot) await H.wait(1);
+    }
+    async function playRound() {
+      G.round++;
+      const card = G.moonDeck.shift();
+      if (!card) { await endGame(); return; }
+      G.moon = null; G.moonHealth = 0; G.lastFlip = card;
+      G.players.forEach((q) => { q.echoed = false; });
+      if (card.k === "hunt") {
+        G.huntsHit++;
+        log(`HUNT ${G.huntsHit}/${G.huntsTotal}: ${card.n}. ${card.e}`);
+        H.update(); await H.wait(2);
+        await (HUNTS[card.n] || (async () => { G.unbuilt.add("Hunt " + card.n); }))();
+        G.players.forEach((q) => q.monster.forEach((e) => { e.seen = (e.seen || 0) + 1; }));
+        if (G.huntsHit >= G.huntsTotal) { await endGame(); return; }
+      } else {
+        G.moon = card;
+        log(`Round ${G.round}: ${card.n}. ${card.e}`);
+        H.update(); await H.wait(2);
+        if (MOONS[card.n]) await MOONS[card.n]();
+      }
+      const reps = moonIs("Long Night") ? 2 : 1;
+      for (let r = 0; r < reps; r++) for (const p of turnOrder()) { await turn(p); if (G.over) return; }
+      for (const p of G.players) {
+        if (hasTrait(p, "Alpha Fang")) for (const q of opps(p)) if (q.monster.length < p.monster.length) await discardN(q, 1, "opp", p);
+        if (hasTrait(p, "Mother Ooze")) draw(p, 1);
+        if (hasTrait(p, "Banshee Wail")) await discardN(neighbor(p, "left"), 1, "opp", p);
+      }
+      G.first = (G.first + 1) % G.players.length;
+      H.update();
+    }
+    async function endGame() {
+      if (G.over) return;
+      G.over = true; G.turnOf = null;
+      G.results = G.players.map((p) => ({ p, ...scoreParts(p), traits: p.monster.length }))
+        .sort((a, b) => b.total - a.total || a.traits - b.traits);
+      const w = G.results[0];
+      G.winner = w.p;
+      log(`The last Hunt is over. ${w.p.name} ${w.p.bot ? "wins" : "win"} with ${w.total} points.`);
+      H.update();
+    }
+
+    // bot play choice: how much the score goes up right now, plus a rough value for the effect
+    function playValue(p, c) {
+      const before = score(p);
+      p.monster.push({ c, tok: 0, fam: null, seen: 0 });
+      const after = score(p);
+      p.monster.pop();
+      const roundsLeft = G.moonDeck.length;
+      return after - before + effectGuess(c) + (c.s ? 1 : 0) + (/^(Start of your turn|End of each round|End of each of your turns)/.test(c.e) ? Math.min(3, roundsLeft * 0.5) : 0);
+    }
+    function effectGuess(c) {
+      const t = c.e;
+      let v = 0;
+      const num = (re) => { const m = re.exec(t); return m ? +m[1] : 0; };
+      v += 0.45 * num(/(?:^|\. )Draw (\d+)/);
+      if (/Each opponent discards/.test(t)) v += 0.5 * (G.players.length - 1);
+      v += 0.35 * num(/One opponent discards (\d+)/) + 0.35 * num(/on your (?:left|right) discards (\d+)/);
+      if (/One opponent (?:removes|with more)/.test(t)) v += 1;
+      if (/each opponent removes/i.test(t)) v += 0.8 * (G.players.length - 1);
+      if (/Steal|take 1 card|Take 1 card from one/.test(t)) v += 0.6;
+      if (/You may play 1 more trait/.test(t)) v += 1.1;
+      if (/^\+\d+ Health|When played: \+\d+ Health/.test(t)) v += 0.6;
+      if (/(?:^|\. )-\d+ Health/.test(t)) v -= 0.7;
+      if (/opponent gets -1 Health|Each opponent gets -1 Health/.test(t)) v += 0.4;
+      v -= 0.5 * num(/Discard (\d+) cards? from your hand/);
+      if (/Remove one of your other traits/.test(t)) v -= 2;
+      if (/Play a trait|play up to 2/.test(t)) v += 1.5;
+      if (/Move one trait/.test(t)) v += 1.5;
+      if (/Swap/.test(t)) v += 0.4;
+      if (/Can't be removed|Opponents can't remove this/.test(t)) v += 0.3;
+      return v;
+    }
+
+    async function run() {
+      for (const p of G.players) draw(p, effHealth(p));
+      log(`New game: ${G.players.length} players, ${plural(G.huntsTotal, "Hunt")}, ${G.moonDeck.length} cards in the Moon deck.`);
+      H.update();
+      let guard = 0;
+      while (!G.over && guard++ < 200) await playRound();
+      if (!G.over) await endGame();
+      return G;
+    }
+
+    G.run = run;
+    G.score = score;
+    G.scoreParts = scoreParts;
+    G.effHealth = effHealth;
+    G.playable = (p, c) => playable(p, c);
+    return G;
+  }
+
+  const api = { createGame, FAM6 };
+  root.StitchedEngine = api;
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+})(typeof window !== "undefined" ? window : globalThis);
+</script>
+<script>
+const DATA = {"traits":[{"f":"Fang","n":"Alpha Fang","p":2,"s":true,"e":"End of each round: each opponent with fewer traits than you discards 1 card."},{"f":"Fang","n":"Count's Cape","p":2,"s":true,"e":"Your Fang \"discard\" effects make opponents discard 1 extra card."},{"f":"Fang","n":"Moonborn","p":3,"s":true,"e":"End of game: +1 for each Fang trait you have."},{"f":"Fang","n":"Blood Pact","p":1,"s":true,"e":"When played: +1 Health. Each opponent gets -1 Health."},{"f":"Fang","n":"Feral King","p":3,"s":true,"e":"Opponents can't steal from your hand."},{"f":"Fang","n":"Night Stalker","p":2,"s":true,"e":"Start of your turn: steal 1 random card from the player with the most cards in hand."},{"f":"Fang","n":"Night Howl","p":2,"s":false,"e":"Each opponent discards 1 card."},{"f":"Fang","n":"Blood Thirst","p":1,"s":false,"e":"Steal 1 random card from one opponent."},{"f":"Fang","n":"Pack Hunter","p":1,"s":false,"e":"End of game: +1 for each other Fang trait you have."},{"f":"Fang","n":"Silver Scar","p":4,"s":false,"e":"-"},{"f":"Fang","n":"Rip and Tear","p":2,"s":false,"e":"One opponent removes one of their traits worth 1 or less."},{"f":"Fang","n":"Lunar Rage","p":3,"s":false,"e":"You may play 1 more trait."},{"f":"Fang","n":"Snarl","p":3,"s":false,"e":"The player on your left discards 1 card."},{"f":"Fang","n":"Raking Claws","p":2,"s":false,"e":"One opponent discards 2 cards."},{"f":"Fang","n":"Bite Marks","p":1,"s":false,"e":"One opponent removes one of their traits worth 2 or less."},{"f":"Fang","n":"Hackles","p":4,"s":false,"e":"-"},{"f":"Fang","n":"Bloodshot Eyes","p":2,"s":false,"e":"Look at an opponent's hand and take 1 card."},{"f":"Fang","n":"Long Fangs","p":3,"s":false,"e":"One opponent discards 1 card."},{"f":"Fang","n":"Prowl","p":1,"s":false,"e":"Draw 1 card. Each opponent discards 1 card."},{"f":"Fang","n":"Ambush","p":2,"s":false,"e":"One opponent removes their lowest-point trait."},{"f":"Fang","n":"Thick Mane","p":3,"s":false,"e":"Opponents can't remove this."},{"f":"Fang","n":"Pounce","p":2,"s":false,"e":"You may play 1 more trait. It must be a Fang trait."},{"f":"Fang","n":"Scent Trail","p":1,"s":false,"e":"Look at the top 3 trait cards, take 1, put the rest on the bottom."},{"f":"Fang","n":"Hunger Pangs","p":2,"s":false,"e":"+1 Health."},{"f":"Fang","n":"Gnash","p":2,"s":false,"e":"Each opponent discards 1 card. Draw 1 card."},{"f":"Fang","n":"Twin Fangs","p":2,"s":false,"e":"End of game: +2 if you have 4 or more Fang traits."},{"f":"Fang","n":"Bloodlust","p":0,"s":false,"e":"End of game: +1 for each opponent with fewer traits than you."},{"f":"Fang","n":"Werewolf Curse","p":1,"s":false,"e":"One opponent gets -1 Health."},{"f":"Fang","n":"Midnight Feast","p":2,"s":false,"e":"Steal 2 random cards from one opponent, then discard 1 card."},{"f":"Fang","n":"Shredding","p":4,"s":false,"e":"Discard 1 card from your hand."},{"f":"Fang","n":"Feral Leap","p":1,"s":false,"e":"You may play 1 more trait."},{"f":"Fang","n":"Howling Choir","p":1,"s":false,"e":"Each opponent discards 1 card for each Fang trait you have (max 3)."},{"f":"Fang","n":"Silver Allergy","p":5,"s":false,"e":"Remove one of your other traits."},{"f":"Fang","n":"Grudge","p":2,"s":false,"e":"One opponent with more traits than you removes one of their traits worth 2 or less."},{"f":"Fang","n":"Tracker's Nose","p":2,"s":false,"e":"Look at every opponent's hand. Draw 1 card."},{"f":"Fang","n":"Torn Ear","p":3,"s":false,"e":"-"},{"f":"Fang","n":"Crimson Drool","p":1,"s":false,"e":"Draw 2 cards, then discard 1 card."},{"f":"Fang","n":"Bat Wings","p":2,"s":false,"e":"You may play 1 more trait worth 2 or less."},{"f":"Fang","n":"Mist Form","p":2,"s":false,"e":"Can't be removed or swapped."},{"f":"Fang","n":"Hypnotic Gaze","p":1,"s":false,"e":"Move one trait worth 2 or less from an opponent's monster onto yours."},{"f":"Fang","n":"Coffin Nap","p":2,"s":false,"e":"Return one of your other traits to your hand."},{"f":"Fang","n":"Garlic Breath","p":3,"s":false,"e":"The player on your right discards 1 card."},{"f":"Fang","n":"Throat Grab","p":2,"s":false,"e":"One opponent discards 1 card and gets -1 Health."},{"f":"Fang","n":"Rabid","p":1,"s":false,"e":"Each opponent removes one of their traits worth 1 or less."},{"f":"Fang","n":"Shadow Pack","p":2,"s":false,"e":"End of game: +1 for each opponent with no Fang traits."},{"f":"Fang","n":"Blood Bank","p":1,"s":false,"e":"Draw 1 card for each Fang trait you have (max 3)."},{"f":"Fang","n":"Fang Polish","p":4,"s":false,"e":"-"},{"f":"Fang","n":"Last Bite","p":2,"s":false,"e":"If this is removed, the opponent who removed it discards 2 cards."},{"f":"Ooze","n":"Mega Blob","p":1,"s":true,"e":"+1 Health. End of game: +1 for each card in your hand (max 5)."},{"f":"Ooze","n":"Mother Ooze","p":2,"s":true,"e":"End of each round: draw 1 card."},{"f":"Ooze","n":"Slime King","p":3,"s":true,"e":"End of game: +1 for each Ooze trait you have."},{"f":"Ooze","n":"Endless Goo","p":1,"s":true,"e":"+2 Health."},{"f":"Ooze","n":"Acid Heart","p":2,"s":true,"e":"When played: each opponent removes one of their traits worth 1 or less."},{"f":"Ooze","n":"Glob Throne","p":2,"s":true,"e":"Opponents can't steal from your hand or make you discard."},{"f":"Ooze","n":"Split Cell","p":1,"s":false,"e":"Draw 2 cards."},{"f":"Ooze","n":"Gooey Body","p":2,"s":false,"e":"+1 Health."},{"f":"Ooze","n":"Absorb","p":1,"s":false,"e":"Take a trait worth 2 or less from the discard pile into your hand."},{"f":"Ooze","n":"Bubbling Mass","p":3,"s":false,"e":"-"},{"f":"Ooze","n":"Copycat Slime","p":0,"s":false,"e":"Do the \"When played\" effect of the last trait anyone played."},{"f":"Ooze","n":"Sticky Trap","p":2,"s":false,"e":"One opponent gets -1 Health."},{"f":"Ooze","n":"Ooze Puddle","p":4,"s":false,"e":"-"},{"f":"Ooze","n":"Mitosis","p":1,"s":false,"e":"Draw 3 cards, then discard 1 card."},{"f":"Ooze","n":"Engulf","p":2,"s":false,"e":"Move one trait worth 1 or less from an opponent's monster onto yours."},{"f":"Ooze","n":"Swell","p":1,"s":false,"e":"+1 Health. Draw 1 card."},{"f":"Ooze","n":"Slurp","p":1,"s":false,"e":"Take any 1 card from the discard pile into your hand."},{"f":"Ooze","n":"Glob Shot","p":2,"s":false,"e":"One opponent discards 1 card."},{"f":"Ooze","n":"Stretchy","p":2,"s":false,"e":"You may play 1 more trait."},{"f":"Ooze","n":"Ooze Trail","p":2,"s":false,"e":"Draw 1 card."},{"f":"Ooze","n":"Slippery","p":3,"s":false,"e":"Opponents can't remove this."},{"f":"Ooze","n":"Bloat","p":4,"s":false,"e":"-1 Health."},{"f":"Ooze","n":"Reform","p":1,"s":false,"e":"Return one of your other traits to your hand."},{"f":"Ooze","n":"Gloop Rain","p":1,"s":false,"e":"Every player draws 1 card. Draw 1 more card."},{"f":"Ooze","n":"Sludge Pit","p":2,"s":false,"e":"The player on your left discards 2 cards."},{"f":"Ooze","n":"Drip","p":0,"s":false,"e":"End of game: +1 for every 2 cards in your hand (max 4)."},{"f":"Ooze","n":"Ooze Core","p":3,"s":false,"e":"End of game: +1 if you have the most cards in hand."},{"f":"Ooze","n":"Toxic Film","p":2,"s":false,"e":"Each opponent discards 1 card."},{"f":"Ooze","n":"Jiggle","p":1,"s":false,"e":"Look at the top 3 trait cards, take 1, put the rest on the bottom."},{"f":"Ooze","n":"Melt Down","p":5,"s":false,"e":"Discard 2 cards from your hand."},{"f":"Ooze","n":"Gunk Shield","p":2,"s":false,"e":"Can't be removed or swapped."},{"f":"Ooze","n":"Snot Rocket","p":1,"s":false,"e":"Steal 1 random card from one opponent."},{"f":"Ooze","n":"Overflow","p":2,"s":false,"e":"End of game: +2 if you have 7 or more cards in hand."},{"f":"Ooze","n":"Pseudopods","p":1,"s":false,"e":"Draw 1 card for each Ooze trait you have (max 3)."},{"f":"Ooze","n":"Goo Clone","p":0,"s":false,"e":"End of game: worth the printed points of your highest-point trait (max 4)."},{"f":"Ooze","n":"Dissolve","p":2,"s":false,"e":"One opponent removes one of their traits worth 2 or less."},{"f":"Ooze","n":"Blobby Hug","p":1,"s":false,"e":"Trade hands with one opponent."},{"f":"Ooze","n":"Spongy","p":2,"s":false,"e":"Whenever an opponent makes you discard, draw 1 card first."},{"f":"Ooze","n":"Living Puddle","p":3,"s":false,"e":"Draw 1 card, then discard 1 card."},{"f":"Ooze","n":"Ooze Bath","p":1,"s":false,"e":"Every player passes 2 cards to the left."},{"f":"Ooze","n":"Sticky Fingers","p":2,"s":false,"e":"Look at an opponent's hand and take 1 card."},{"f":"Ooze","n":"Grow Spurt","p":1,"s":false,"e":"+1 Health. You may play 1 more trait."},{"f":"Ooze","n":"Slime Mold","p":2,"s":false,"e":"End of game: +1 for each Bone trait you have."},{"f":"Ooze","n":"Wet Squelch","p":3,"s":false,"e":"The player on your right discards 1 card."},{"f":"Ooze","n":"Squish","p":2,"s":false,"e":"Draw 2 cards, then discard 2 cards."},{"f":"Ooze","n":"Ooze Pump","p":1,"s":false,"e":"Every player gets +1 Health. You get +1 more."},{"f":"Ooze","n":"Translucent","p":2,"s":false,"e":"Draw 1 card. Can't be swapped."},{"f":"Ooze","n":"Primordial Soup","p":0,"s":false,"e":"End of game: +1 for each family on your monster."},{"f":"Spook","n":"Phantom Shield","p":1,"s":true,"e":"Hunts can't remove your traits or make you discard."},{"f":"Spook","n":"Banshee Wail","p":2,"s":true,"e":"End of each round: the player on your left discards 1 card."},{"f":"Spook","n":"Ghost Queen","p":3,"s":true,"e":"End of game: +1 for each Spook trait you have."},{"f":"Spook","n":"Poltergeist Lord","p":2,"s":true,"e":"Your Spook traits can't be removed or swapped."},{"f":"Spook","n":"Wraith Veil","p":2,"s":true,"e":"Opponents' \"remove\" effects can't pick you."},{"f":"Spook","n":"Grim Lantern","p":1,"s":true,"e":"Start of your turn: draw 1 card."},{"f":"Spook","n":"Vanish","p":1,"s":false,"e":"Swap one of your traits with one of an opponent's."},{"f":"Spook","n":"Haunt","p":2,"s":false,"e":"Look at an opponent's hand and take 1 card."},{"f":"Spook","n":"Ethereal","p":2,"s":false,"e":"Can't be removed or swapped."},{"f":"Spook","n":"Poltergeist","p":1,"s":false,"e":"Every player passes 1 card to the left."},{"f":"Spook","n":"Cold Spot","p":3,"s":false,"e":"-"},{"f":"Spook","n":"Whisper","p":1,"s":false,"e":"Draw 1 card. You may play it right away."},{"f":"Spook","n":"See-Through","p":4,"s":false,"e":"-"},{"f":"Spook","n":"Possess","p":1,"s":false,"e":"Move one trait worth 2 or less from an opponent's monster onto yours."},{"f":"Spook","n":"Rattling Chains","p":2,"s":false,"e":"Each opponent discards 1 card."},{"f":"Spook","n":"Ectoplasm","p":2,"s":false,"e":"Draw 2 cards, then discard 1 card."},{"f":"Spook","n":"Seance","p":1,"s":false,"e":"Look at every opponent's hand. Take 1 card from one of them."},{"f":"Spook","n":"Spirit Walk","p":2,"s":false,"e":"You may play 1 more trait."},{"f":"Spook","n":"Wail","p":2,"s":false,"e":"The player on your left discards 2 cards."},{"f":"Spook","n":"Flicker","p":3,"s":false,"e":"End of game: +2 if this is your only Spook trait."},{"f":"Spook","n":"Spooky Swap","p":1,"s":false,"e":"Trade hands with one opponent."},{"f":"Spook","n":"Floating","p":3,"s":false,"e":"Opponents can't remove this."},{"f":"Spook","n":"Ghost Light","p":1,"s":false,"e":"Look at the top 3 trait cards, take 1, put the rest on the bottom."},{"f":"Spook","n":"Chill Touch","p":2,"s":false,"e":"One opponent gets -1 Health."},{"f":"Spook","n":"Hollow Moan","p":1,"s":false,"e":"Every player passes 2 cards to the left. Draw 1 card."},{"f":"Spook","n":"Eerie Silence","p":2,"s":false,"e":"Draw 1 card."},{"f":"Spook","n":"Spectral Twin","p":0,"s":false,"e":"End of game: worth the printed points of one opponent's highest-point trait (max 4)."},{"f":"Spook","n":"Unseen","p":2,"s":false,"e":"Return one of your other traits to your hand."},{"f":"Spook","n":"Fright","p":1,"s":false,"e":"One opponent discards 2 cards."},{"f":"Spook","n":"Will-o'-Wisp","p":2,"s":false,"e":"Swap one of your traits worth 2 or less with one on an opponent's monster."},{"f":"Spook","n":"Shiver","p":3,"s":false,"e":"The player on your right discards 1 card."},{"f":"Spook","n":"Drafty Hallway","p":1,"s":false,"e":"Every player passes their whole hand to the left."},{"f":"Spook","n":"Ghostly Grasp","p":2,"s":false,"e":"Steal 1 random card from one opponent."},{"f":"Spook","n":"Faded","p":4,"s":false,"e":"-1 Health."},{"f":"Spook","n":"Haunted Mirror","p":1,"s":false,"e":"Do the \"When played\" effect of another trait on your monster."},{"f":"Spook","n":"Restless","p":2,"s":false,"e":"End of game: +2 if you have fewer traits than every opponent."},{"f":"Spook","n":"Spirit Chain","p":1,"s":false,"e":"Draw 1 card for each Spook trait you have (max 3)."},{"f":"Spook","n":"Night Terror","p":2,"s":false,"e":"One opponent removes their highest-point trait worth 3 or less."},{"f":"Spook","n":"Shroud","p":2,"s":false,"e":"Your other traits worth 1 or less can't be removed."},{"f":"Spook","n":"Ghost Story","p":1,"s":false,"e":"Every player draws 1 card. You may play 1 more trait."},{"f":"Spook","n":"Lingering","p":2,"s":false,"e":"If this is removed, put it in your hand instead."},{"f":"Spook","n":"Mournful","p":4,"s":false,"e":"Discard 1 card from your hand."},{"f":"Spook","n":"Ghost Ship","p":2,"s":false,"e":"End of game: +1 for each Ooze trait you have."},{"f":"Spook","n":"Pale Glow","p":3,"s":false,"e":"-"},{"f":"Spook","n":"Spirit Bargain","p":1,"s":false,"e":"Discard your hand, then draw that many cards +1."},{"f":"Spook","n":"Ghastly Grin","p":2,"s":false,"e":"Every opponent shows you their hand. Draw 1 card."},{"f":"Spook","n":"Phase Shift","p":2,"s":false,"e":"Swap a trait between two opponents' monsters."},{"f":"Spook","n":"Echo","p":1,"s":false,"e":"Do the \"When played\" effect of the last trait you played."},{"f":"Bone","n":"Lich Crown","p":2,"s":true,"e":"When one of your traits is removed, draw 2 cards."},{"f":"Bone","n":"Bone Throne","p":3,"s":true,"e":"End of game: +1 for each Bone trait you have."},{"f":"Bone","n":"Necro Staff","p":2,"s":true,"e":"Start of your turn: take 1 card from the discard pile into your hand."},{"f":"Bone","n":"Grave Lord","p":1,"s":true,"e":"When played: play up to 2 traits worth 2 or less from the discard pile."},{"f":"Bone","n":"Deathless","p":2,"s":true,"e":"Your removed traits go to your hand instead of the discard pile."},{"f":"Bone","n":"Skull Banner","p":3,"s":true,"e":"End of game: +1 for every 4 cards in the discard pile (max 5)."},{"f":"Bone","n":"Rise Again","p":1,"s":false,"e":"Play a trait from the discard pile."},{"f":"Bone","n":"Bone Pile","p":0,"s":false,"e":"End of game: +1 for every 3 cards in the discard pile (max 4)."},{"f":"Bone","n":"Hollow Eyes","p":3,"s":false,"e":"-"},{"f":"Bone","n":"Grave Dig","p":1,"s":false,"e":"Take any 2 cards from the discard pile into your hand."},{"f":"Bone","n":"Unkillable","p":2,"s":false,"e":"If this is removed, put it back on your monster (once)."},{"f":"Bone","n":"Corpse Feast","p":2,"s":false,"e":"Every player discards 1 card. Draw 1 card for each card discarded."},{"f":"Bone","n":"Rib Cage","p":4,"s":false,"e":"-"},{"f":"Bone","n":"Skeleton Key","p":1,"s":false,"e":"Take any 1 card from the discard pile into your hand. Draw 1 card."},{"f":"Bone","n":"Rattle","p":2,"s":false,"e":"Each opponent discards 1 card."},{"f":"Bone","n":"Shamble","p":3,"s":false,"e":"The player on your left discards 1 card."},{"f":"Bone","n":"Bone Armor","p":3,"s":false,"e":"Opponents can't remove this."},{"f":"Bone","n":"Grave Robber","p":1,"s":false,"e":"Steal 1 random card from one opponent."},{"f":"Bone","n":"Zombie Hunger","p":2,"s":false,"e":"+1 Health."},{"f":"Bone","n":"Crypt Crawl","p":1,"s":false,"e":"Look at the top 3 trait cards, take 1, put the rest on the bottom."},{"f":"Bone","n":"Marrow Suck","p":2,"s":false,"e":"Take a trait worth 2 or less from the discard pile into your hand."},{"f":"Bone","n":"Brittle Bones","p":4,"s":false,"e":"-1 Health."},{"f":"Bone","n":"Bone Toss","p":2,"s":false,"e":"One opponent discards 2 cards."},{"f":"Bone","n":"Undying Grudge","p":2,"s":false,"e":"One opponent removes one of their traits worth 1 or less."},{"f":"Bone","n":"Skull Stack","p":1,"s":false,"e":"End of game: +1 for each Bone trait you have (max 4)."},{"f":"Bone","n":"Coffin Lid","p":2,"s":false,"e":"Can't be removed or swapped."},{"f":"Bone","n":"Rotting Flesh","p":1,"s":false,"e":"Every player discards 2 cards. Draw 2 cards."},{"f":"Bone","n":"Ghoul Feast","p":2,"s":false,"e":"Draw 1 card for every 5 cards in the discard pile (max 3)."},{"f":"Bone","n":"Exhume","p":1,"s":false,"e":"Play a trait worth 3 or less from the discard pile."},{"f":"Bone","n":"Dead Weight","p":5,"s":false,"e":"Discard 2 cards from your hand."},{"f":"Bone","n":"Bone Saw","p":2,"s":false,"e":"One opponent removes their lowest-point trait."},{"f":"Bone","n":"Second Life","p":1,"s":false,"e":"Return one of your other traits to your hand. Draw 1 card."},{"f":"Bone","n":"Mummy Wraps","p":2,"s":false,"e":"The first time one of your other traits would be removed, remove this instead."},{"f":"Bone","n":"Death Rattle","p":1,"s":false,"e":"If this is removed, each opponent discards 1 card."},{"f":"Bone","n":"Jawbone","p":3,"s":false,"e":"-"},{"f":"Bone","n":"Boneyard","p":1,"s":false,"e":"Every player discards 1 card. Take 1 of those cards into your hand."},{"f":"Bone","n":"Tombstone","p":2,"s":false,"e":"End of game: +1 for each of your traits removed this game (max 4)."},{"f":"Bone","n":"Skeletal Hand","p":2,"s":false,"e":"Look at an opponent's hand and take 1 card."},{"f":"Bone","n":"Rigor Mortis","p":2,"s":false,"e":"One opponent gets -1 Health."},{"f":"Bone","n":"Pile of Skulls","p":1,"s":false,"e":"End of game: +2 if the discard pile has 20 or more cards."},{"f":"Bone","n":"Lurch","p":2,"s":false,"e":"You may play 1 more trait."},{"f":"Bone","n":"Femur Club","p":3,"s":false,"e":"The player on your right discards 1 card."},{"f":"Bone","n":"Bonemeal","p":1,"s":false,"e":"End of game: +1 for each Ooze trait you have."},{"f":"Bone","n":"Ossuary","p":2,"s":false,"e":"Take any 3 cards from the discard pile into your hand, then discard 2 cards."},{"f":"Bone","n":"Clatter","p":1,"s":false,"e":"Each opponent gives you 1 card of their choice."},{"f":"Bone","n":"Gravedigger","p":2,"s":false,"e":"Draw 2 cards."},{"f":"Bone","n":"Cold Grave","p":3,"s":false,"e":"End of game: +1 if you have the fewest cards in hand."},{"f":"Bone","n":"Bone Dust","p":1,"s":false,"e":"Swap one of your traits with a trait in the discard pile."},{"f":"Scale","n":"Ancient Wyrm","p":3,"s":true,"e":"End of game: +1 for each Hunt that hit while this was on your monster."},{"f":"Scale","n":"Dragon Queen","p":3,"s":true,"e":"End of game: +1 for each Scale trait you have."},{"f":"Scale","n":"Kaiju King","p":5,"s":true,"e":"-2 Health."},{"f":"Scale","n":"Golden Hoard","p":2,"s":true,"e":"End of game: +2 for each of your traits worth 5 or more."},{"f":"Scale","n":"Firestorm Heart","p":2,"s":true,"e":"When played: each opponent removes their lowest-point trait."},{"f":"Scale","n":"Elder Scale","p":3,"s":true,"e":"Your traits worth 4 or more can't be removed."},{"f":"Scale","n":"Dragon Hoard","p":5,"s":false,"e":"Discard 2 cards from your hand."},{"f":"Scale","n":"Hydra Heads","p":1,"s":false,"e":"End of game: +1 for each Scale trait you have (counts itself)."},{"f":"Scale","n":"Thick Hide","p":3,"s":false,"e":"Opponents can't remove this."},{"f":"Scale","n":"Kaiju Size","p":5,"s":false,"e":"-1 Health."},{"f":"Scale","n":"Fire Breath","p":2,"s":false,"e":"One opponent removes their lowest-point trait."},{"f":"Scale","n":"Tail Swipe","p":2,"s":false,"e":"The player on your left discards 2 cards."},{"f":"Scale","n":"Giant Wings","p":4,"s":false,"e":"-"},{"f":"Scale","n":"Molten Belly","p":5,"s":false,"e":"Discard 1 card from your hand. -1 Health."},{"f":"Scale","n":"Roar","p":2,"s":false,"e":"Each opponent discards 1 card."},{"f":"Scale","n":"Spiked Back","p":3,"s":false,"e":"If this is removed, the opponent who removed it discards 1 card."},{"f":"Scale","n":"Smoke Snort","p":1,"s":false,"e":"Draw 2 cards."},{"f":"Scale","n":"Stomp","p":3,"s":false,"e":"One opponent removes one of their traits worth 1 or less."},{"f":"Scale","n":"Horned Crest","p":4,"s":false,"e":"-"},{"f":"Scale","n":"Earthquake","p":2,"s":false,"e":"Every player removes one of their traits worth 1 or less (you too)."},{"f":"Scale","n":"Scorch","p":3,"s":false,"e":"Discard 1 card. One opponent removes one of their traits worth 2 or less."},{"f":"Scale","n":"Gold Teeth","p":2,"s":false,"e":"End of game: +1 for each Signature on your monster."},{"f":"Scale","n":"Sleeping Giant","p":6,"s":false,"e":"-2 Health."},{"f":"Scale","n":"Wing Gust","p":2,"s":false,"e":"Every player passes 1 card to the left."},{"f":"Scale","n":"Armor Plates","p":3,"s":false,"e":"Can't be removed or swapped."},{"f":"Scale","n":"Heat Wave","p":2,"s":false,"e":"Each opponent discards 1 card."},{"f":"Scale","n":"Cave Lair","p":3,"s":false,"e":"Take any 1 card from the discard pile into your hand."},{"f":"Scale","n":"Lava Blood","p":4,"s":false,"e":"Every player discards 1 card (you too)."},{"f":"Scale","n":"Crushing Jaw","p":2,"s":false,"e":"Discard 2 cards. One opponent removes one of their traits worth 3 or less."},{"f":"Scale","n":"Sky Terror","p":3,"s":false,"e":"Discard 1 card. One opponent discards 2 cards."},{"f":"Scale","n":"Egg Clutch","p":1,"s":false,"e":"End of game: +3 if you have 3 or more Scale traits."},{"f":"Scale","n":"Dragon Sight","p":1,"s":false,"e":"Look at the top 5 trait cards, take 1, put the rest on the bottom."},{"f":"Scale","n":"Titan Grip","p":2,"s":false,"e":"Move one trait worth 2 or less from an opponent's monster onto yours."},{"f":"Scale","n":"Venom Spit","p":2,"s":false,"e":"One opponent gets -1 Health."},{"f":"Scale","n":"Scale Shed","p":2,"s":false,"e":"Return one of your other traits to your hand."},{"f":"Scale","n":"Volcano Nest","p":5,"s":false,"e":"Remove one of your other traits."},{"f":"Scale","n":"Swallow Whole","p":1,"s":false,"e":"Discard 2 cards. One opponent removes one of their traits worth 4 or less."},{"f":"Scale","n":"Treasure Sense","p":1,"s":false,"e":"Draw 1 card for each Scale trait you have (max 3)."},{"f":"Scale","n":"Ember Eyes","p":3,"s":false,"e":"-"},{"f":"Scale","n":"Thunder Steps","p":2,"s":false,"e":"You may play 1 more trait worth 2 or less."},{"f":"Scale","n":"Dragon Pride","p":2,"s":false,"e":"End of game: +2 if none of your traits were removed this game."},{"f":"Scale","n":"Iron Claws","p":3,"s":false,"e":"Steal 1 random card from one opponent."},{"f":"Scale","n":"Kaiju Roar","p":1,"s":false,"e":"Each opponent removes one of their traits worth 1 or less."},{"f":"Scale","n":"Serpent Coils","p":3,"s":false,"e":"One opponent discards 1 card."},{"f":"Scale","n":"Big Boned","p":4,"s":false,"e":"End of game: -2 if you have 6 or more traits."},{"f":"Scale","n":"Flame Mane","p":1,"s":false,"e":"Draw 1 card. Each opponent discards 1 card."},{"f":"Scale","n":"Ancient Bones","p":3,"s":false,"e":"End of game: +1 for each Bone trait you have (max 3)."},{"f":"Scale","n":"Mountain Back","p":7,"s":false,"e":"-2 Health. Discard 2 cards from your hand."},{"f":"Stitch","n":"Mad Genius","p":1,"s":true,"e":"You may play 1 more trait every turn."},{"f":"Stitch","n":"Patchwork King","p":3,"s":true,"e":"End of game: +1 for each Stitch trait you have."},{"f":"Stitch","n":"Lightning Rod","p":2,"s":true,"e":"Start of your turn: draw 1 card for each Hunt that has hit (max 3)."},{"f":"Stitch","n":"Iron Golem","p":3,"s":true,"e":"Your traits can't be swapped. End of game: +2."},{"f":"Stitch","n":"Spare Parts Bin","p":2,"s":true,"e":"When one of your other traits is removed, put it in your hand."},{"f":"Stitch","n":"Living Lab","p":2,"s":true,"e":"When played: look at the top 5 trait cards, take 2, put the rest on the bottom."},{"f":"Stitch","n":"Bolted Neck","p":4,"s":false,"e":"-"},{"f":"Stitch","n":"Stitches","p":2,"s":false,"e":"Draw 1 card."},{"f":"Stitch","n":"Spare Arm","p":1,"s":false,"e":"You may play 1 more trait."},{"f":"Stitch","n":"Jolt","p":1,"s":false,"e":"Draw 2 cards."},{"f":"Stitch","n":"Graft","p":2,"s":false,"e":"Play a trait worth 2 or less from the discard pile."},{"f":"Stitch","n":"Rewire","p":1,"s":false,"e":"Return one of your other traits to your hand. You may play 1 more trait."},{"f":"Stitch","n":"Patch Job","p":2,"s":false,"e":"End of game: +2 if you have 5 or more traits."},{"f":"Stitch","n":"Clank","p":3,"s":false,"e":"The player on your left discards 1 card."},{"f":"Stitch","n":"Body Swap","p":1,"s":false,"e":"Swap one of your traits with one of an opponent's."},{"f":"Stitch","n":"Tesla Coil","p":2,"s":false,"e":"Each opponent discards 1 card."},{"f":"Stitch","n":"Brain Jar","p":1,"s":false,"e":"Look at the top 3 trait cards, take 1, put the rest on the bottom."},{"f":"Stitch","n":"Steel Plate","p":3,"s":false,"e":"Opponents can't remove this."},{"f":"Stitch","n":"Sewn Mouth","p":2,"s":false,"e":"One opponent gets -1 Health."},{"f":"Stitch","n":"Mismatched Eyes","p":2,"s":false,"e":"Look at an opponent's hand and take 1 card."},{"f":"Stitch","n":"Assembly Line","p":1,"s":false,"e":"Draw 1 card for each Stitch trait you have (max 3)."},{"f":"Stitch","n":"Overcharge","p":4,"s":false,"e":"Discard 1 card from your hand."},{"f":"Stitch","n":"Gear Heart","p":2,"s":false,"e":"+1 Health."},{"f":"Stitch","n":"Hammer Fist","p":2,"s":false,"e":"One opponent removes one of their traits worth 2 or less."},{"f":"Stitch","n":"Screw Loose","p":1,"s":false,"e":"Every player passes 1 card to the left. You may play 1 more trait."},{"f":"Stitch","n":"Stitch Up","p":2,"s":false,"e":"If this is removed, put it in your hand instead."},{"f":"Stitch","n":"Spark Gap","p":1,"s":false,"e":"Every player draws 1 card. Draw 1 more card."},{"f":"Stitch","n":"Lab Notes","p":1,"s":false,"e":"End of game: +1 for every 2 cards in your hand (max 3)."},{"f":"Stitch","n":"Bolt Gun","p":2,"s":false,"e":"Steal 1 random card from one opponent."},{"f":"Stitch","n":"Crude Copy","p":0,"s":false,"e":"Do the \"When played\" effect of a trait on an opponent's monster."},{"f":"Stitch","n":"Hulking Frame","p":5,"s":false,"e":"-1 Health."},{"f":"Stitch","n":"Spring Legs","p":2,"s":false,"e":"You may play 1 more trait worth 2 or less."},{"f":"Stitch","n":"Oil Leak","p":2,"s":false,"e":"Discard 1 card. One opponent discards 2 cards."},{"f":"Stitch","n":"Pressure Valve","p":1,"s":false,"e":"Discard any number of cards, then draw that many +1."},{"f":"Stitch","n":"Cog Teeth","p":3,"s":false,"e":"-"},{"f":"Stitch","n":"Riveted","p":2,"s":false,"e":"Can't be removed or swapped."},{"f":"Stitch","n":"Dynamo","p":1,"s":false,"e":"End of game: +1 for each of your traits worth 1 or less (max 4)."},{"f":"Stitch","n":"Junk Heap","p":1,"s":false,"e":"Take any 2 cards from the discard pile into your hand."},{"f":"Stitch","n":"Stitched Grin","p":3,"s":false,"e":"Draw 1 card, then discard 1 card."},{"f":"Stitch","n":"Reanimate","p":1,"s":false,"e":"Play a trait worth 2 or less from the discard pile."},{"f":"Stitch","n":"Fuse Box","p":2,"s":false,"e":"End of game: +2 if you have traits from 5 or more families."},{"f":"Stitch","n":"Clockwork","p":1,"s":false,"e":"End of each of your turns: draw 1 card."},{"f":"Stitch","n":"Electro Shock","p":1,"s":false,"e":"Each opponent gets -1 Health."},{"f":"Stitch","n":"Copper Wire","p":1,"s":false,"e":"Draw 1 card. +1 Health."},{"f":"Stitch","n":"Bucket Head","p":4,"s":false,"e":"-"},{"f":"Stitch","n":"Arm Cannon","p":2,"s":false,"e":"One opponent removes their lowest-point trait."},{"f":"Stitch","n":"Blueprint","p":1,"s":false,"e":"Look at the top 3 trait cards, take 1. You may play 1 more trait."},{"f":"Stitch","n":"Kit Bash","p":3,"s":false,"e":"Discard 2 cards, then draw 2 cards."},{"f":"Freak","n":"Extra Eye","p":1,"s":false,"e":"Look at the top 3 trait cards, take 1, put the rest on the bottom."},{"f":"Freak","n":"Mismatched Parts","p":1,"s":false,"e":"Counts as every family for Top of the family and Full set."},{"f":"Freak","n":"Tentacles","p":2,"s":false,"e":"Draw 1 card."},{"f":"Freak","n":"Sharp Horns","p":3,"s":false,"e":"-"},{"f":"Freak","n":"Glowing Spots","p":1,"s":false,"e":"End of game: +2 if your monster has traits from 4 or more families."},{"f":"Freak","n":"Two Heads","p":2,"s":false,"e":"You may play 1 more trait."},{"f":"Freak","n":"Forked Tongue","p":2,"s":false,"e":"Look at an opponent's hand and take 1 card."},{"f":"Freak","n":"Third Arm","p":1,"s":false,"e":"Steal 1 random card from one opponent."},{"f":"Freak","n":"Too Many Teeth","p":3,"s":false,"e":"-"},{"f":"Freak","n":"Shapeshifter","p":0,"s":false,"e":"When played: choose a family. This trait counts as that family."},{"f":"Freak","n":"Weird Smell","p":2,"s":false,"e":"Each opponent discards 1 card."},{"f":"Freak","n":"Glitch","p":1,"s":false,"e":"Swap one of your traits with one of an opponent's."}],"moons":[{"n":"Quiet Moon","e":"Nothing happens."},{"n":"Full Moon","e":"When you play a Fang trait, draw 1 card."},{"n":"Witching Hour","e":"Everyone plays 2 traits this turn."},{"n":"Feeding Time","e":"Everyone draws 2 cards."},{"n":"Thunderstorm","e":"Everyone passes their whole hand to the left."},{"n":"Graveyard Shift","e":"When you play a Bone trait, also take 1 card from the discard pile into your hand."},{"n":"Slime Season","e":"Everyone has +1 Health this round."},{"n":"Blood Moon","e":"Everyone discards 1 card."},{"n":"Haunted House","e":"When you play a Spook trait, draw 1 card."},{"n":"Dragon Season","e":"Scale traits played this round are worth +1 (token)."},{"n":"Lost Souls","e":"Everyone may discard any number of cards and draw that many."},{"n":"Midnight Snack","e":"The player with the fewest traits plays 2 traits this round."},{"n":"Lightning Night","e":"When you play a Stitch trait, draw 1 card."},{"n":"Sewer Night","e":"When you play an Ooze trait, draw 1 card."},{"n":"New Moon","e":"\"When played\" effects don't happen this round."},{"n":"Harvest Moon","e":"Everyone draws 1 card at the end of their turn."},{"n":"Thick Fog","e":"Traits can't be removed this round."},{"n":"Creaky Floors","e":"Everyone passes 1 card to the right."},{"n":"Bat Swarm","e":"Everyone draws 1 card, then discards 1 card."},{"n":"Monster Prom","e":"Everyone may play 1 more trait from a family they don't have yet."},{"n":"Crypt Opens","e":"In turn order, everyone takes 1 card from the discard pile into their hand."},{"n":"Wolf Pack Night","e":"Fang traits played this round are worth +1 (token)."},{"n":"Ghost Parade","e":"Spook traits played this round are worth +1 (token)."},{"n":"Bone Dance","e":"Bone traits played this round are worth +1 (token)."},{"n":"Ooze Flood","e":"Ooze traits played this round are worth +1 (token)."},{"n":"Spark Storm","e":"Stitch traits played this round are worth +1 (token)."},{"n":"Freak Show","e":"Freak traits played this round are worth +2 (token)."},{"n":"Hungry Night","e":"Everyone has -1 Health this round."},{"n":"Swap Meet","e":"Everyone passes 1 trait (their pick, not Signatures) to the left."},{"n":"Grave Robbing","e":"You may play a trait from the discard pile instead of from your hand."},{"n":"Moonlit Feast","e":"Everyone draws 1 card for each family on their monster (max 3)."},{"n":"Howling Wind","e":"Everyone discards down to 4 cards."},{"n":"Nightmare","e":"The player with the most points discards 2 cards."},{"n":"Underdog Moon","e":"The player with the fewest points draws 3 cards."},{"n":"Silent Night","e":"No one can make anyone discard this round."},{"n":"Echoing Halls","e":"The first trait each player plays this round has its \"When played\" effect happen twice."},{"n":"Cursed Coins","e":"Everyone passes 2 cards to the left."},{"n":"Lab Accident","e":"Everyone trades their whole hand with the player on their right."},{"n":"Mirror Moon","e":"Everyone plays the top card of the trait deck instead of a card from their hand."},{"n":"Bonfire Night","e":"Everyone may remove one of their traits to draw 3 cards."},{"n":"Rainy Night","e":"Traits worth 4 or more can't be played this round."},{"n":"Gloom","e":"Traits worth 1 or less played this round are worth +1 (token)."},{"n":"Eclipse","e":"Turns go counter-clockwise this round."},{"n":"Hunter's Moon","e":"Everyone sees the next Moon or Hunt card."},{"n":"Crow Call","e":"Everyone looks at the top 2 trait cards and takes 1."},{"n":"Wishing Well","e":"Everyone may discard 2 cards to take any 1 card from the discard pile."},{"n":"Tug of War","e":"The player with the most cards in hand gives 1 card to the player with the fewest."},{"n":"Night Market","e":"Everyone draws 3 cards, then discards 2 cards."},{"n":"Witch's Brew","e":"Everyone gets +1 Health for the rest of the game."},{"n":"Long Night","e":"Everyone takes 2 turns this round."},{"n":"Empty Hands","e":"Players with 2 or fewer cards in hand draw 3 cards."},{"n":"Dead of Night","e":"Everyone discards their hand and draws up to their Health."},{"n":"Cobweb Night","e":"Everyone may return one of their traits to their hand."},{"n":"Shooting Star","e":"Everyone draws 1 card and may play 1 more trait."},{"n":"Midnight Bell","e":"Everyone draws 1 card. The hunters are getting close."}],"hunts":[{"n":"Torch Mob","e":"Each player removes 1 trait (their pick)."},{"n":"Holy Water","e":"Each player removes their highest-point trait (not Signatures)."},{"n":"Monster Hunters","e":"The player with the most points removes 2 traits (their pick)."},{"n":"Sunrise","e":"Each player with no Spook trait discards down to 3 cards."},{"n":"Exorcism","e":"Each player discards 2 cards. Players with a Bone trait then draw 1 card."},{"n":"Mad Scientist","e":"Each player passes 1 trait (their pick, not Signatures) to the player on their left."},{"n":"Silver Bullets","e":"Each player removes 1 Fang trait."},{"n":"Salt Circle","e":"Each player removes 1 Ooze trait."},{"n":"Ghost Trap","e":"Each player removes 1 Spook trait."},{"n":"Holy Ground","e":"Each player removes 1 Bone trait."},{"n":"Dragon Slayer","e":"Each player removes 1 Scale trait."},{"n":"Lightning Strike","e":"Each player removes 1 Stitch trait."},{"n":"Garlic Fog","e":"Each player gets -1 Health."},{"n":"Wooden Stakes","e":"Each player removes their lowest-point trait."},{"n":"Witch Hunt","e":"The player with the most traits removes 1 trait. Everyone else draws 1 card."},{"n":"Bounty Posters","e":"The player with the most points discards their hand."},{"n":"Burning Barn","e":"Each player discards half their hand (rounded down)."},{"n":"Mirror Maze","e":"Each player passes 1 trait (their pick, not Signatures) to the player on their right."},{"n":"Church Bells","e":"Each player removes 1 trait worth 2 or less."},{"n":"Village Watch","e":"Each player with 6 or more traits removes 2 traits."},{"n":"Hunting Hounds","e":"Each player with fewer than 3 cards in hand removes 1 trait."},{"n":"Daylight Raid","e":"Each player discards 2 cards."},{"n":"Monster Zoo","e":"The player with the fewest points draws 3 cards. Everyone else discards 1 card."},{"n":"Lab Fire","e":"Each player removes 1 trait that has an end-of-game effect."},{"n":"Crossbows","e":"Each player removes 1 trait worth 3 or more (not Signatures)."},{"n":"Trap Pit","e":"Each player with a Scale trait discards 2 cards."},{"n":"Witch's Curse","e":"Every player passes their whole hand to the right."},{"n":"Grand Inquisitor","e":"Each player shows their hand and discards every trait worth 3 or more."},{"n":"Full Eclipse","e":"Each player removes 1 trait and discards 1 card."},{"n":"Angry Villagers","e":"Each player removes 1 trait for every 5 traits they have."}]};
+const FAMS = ["Fang", "Ooze", "Spook", "Bone", "Scale", "Stitch", "Freak"];
+const BLURB = { Fang: "attack", Ooze: "grow", Spook: "sneaky", Bone: "come back", Scale: "big points", Stitch: "combos", Freak: "fits anything" };
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmt = (e) => e === "-" ? '<span style="color:var(--muted)">No effect. Just big.</span>'
+  : esc(e).replace(/^(When played:|End of game:|End of each round:|Start of your turn:|End of each of your turns:)/, "<b>$1</b>");
+const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+function load() { try { return JSON.parse(localStorage.getItem("stitched-setup") || "{}"); } catch { return {}; } }
+function save() { try { localStorage.setItem("stitched-setup", JSON.stringify(S)); } catch {} }
+const S = Object.assign({ cpu: 1, hunts: 3, per: 4, app: 5, fams: FAMS.slice() }, load());
+
+$("#nTraits").textContent = DATA.traits.length;
+$("#nMoons").textContent = DATA.moons.length;
+$("#nHunts").textContent = DATA.hunts.length;
+
+function traitCard(t) {
+  return `<article class="card fam-${t.f.toLowerCase()}${t.s ? " sig" : ""}"><header><span class="fam">${t.f}</span><span class="pts">${t.p}</span></header>`
+    + `<h3>${esc(t.n)}</h3><p>${fmt(t.e)}</p>${t.s ? '<span class="sigtag">Signature</span>' : ""}</article>`;
+}
+
+/* setup */
+document.querySelectorAll(".stepper").forEach((el) => {
+  const k = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max;
+  el.innerHTML = `<button type="button" aria-label="Less" id="s-${k}-minus">&minus;</button><output id="s-${k}"></output><button type="button" aria-label="More" id="s-${k}-plus">+</button><small>${min}-${max}</small>`;
+  const out = el.querySelector("output"), [minus, plus] = el.querySelectorAll("button");
+  const draw = () => { out.textContent = S[k]; minus.disabled = S[k] <= min; plus.disabled = S[k] >= max; };
+  minus.onclick = () => { S[k] = Math.max(min, S[k] - 1); draw(); changed(); };
+  plus.onclick = () => { S[k] = Math.min(max, S[k] + 1); draw(); changed(); };
+  draw();
+});
+function drawFamPick() {
+  $("#famPick").innerHTML = FAMS.map((f) => `<button type="button" class="chip fam-${f.toLowerCase()}" id="pick-${f}" aria-pressed="${S.fams.includes(f)}">${f} <span style="color:var(--muted)">${BLURB[f]}</span></button>`).join("");
+  $("#famPick").querySelectorAll("button").forEach((b) => b.onclick = () => {
+    const f = b.id.slice(5);
+    if (S.fams.includes(f)) { if (S.fams.length > 2) S.fams = S.fams.filter((x) => x !== f); }
+    else S.fams = FAMS.filter((x) => x === f || S.fams.includes(x));
+    drawFamPick(); changed();
+  });
+}
+function changed() {
+  const total = S.hunts * S.per, deckSize = DATA.traits.filter((t) => S.fams.includes(t.f)).length;
+  $("#math").innerHTML = `${S.hunts} Hunt${S.hunts > 1 ? "s" : ""} &times; ${S.per} cards = <b>${total}</b> Moon deck cards (${S.hunts * (S.per - 1)} Moons + ${S.hunts} Hunts)<br><span class="note">${S.cpu + 1} players &middot; trait deck ${deckSize} cards &middot; Health ${S.app}</span>`;
+  save(); dealMoons(); dealHand();
+}
+function dealMoons() {
+  const hunts = shuffle(DATA.hunts).slice(0, S.hunts);
+  let pool = [];
+  const need = S.hunts * (S.per - 1);
+  while (pool.length < need) pool = pool.concat(shuffle(DATA.moons));
+  const stacks = hunts.map((h, i) => shuffle(pool.slice(i * (S.per - 1), (i + 1) * (S.per - 1)).map((m) => ({ ...m, k: "moon" })).concat([{ ...h, k: "hunt" }])));
+  const last = stacks[stacks.length - 1], fi = last.findIndex((c) => c.k === "hunt");
+  let n = 0;
+  $("#stacks").innerHTML = stacks.map((st, si) => `<div class="stack"><span class="lbl">Set ${si + 1}</span><div class="tiles">`
+    + st.map((c, ci) => {
+      n++;
+      const fin = si === stacks.length - 1 && ci === fi, un = si === stacks.length - 1 && ci > fi;
+      return `<div class="tile ${c.k}${fin ? " final" : ""}${un ? " unplayed" : ""}" title="${esc(c.e)}"><span class="k">${c.k === "hunt" ? (fin ? "Final Hunt" : "Hunt") : "Round " + n}</span><span class="nm">${esc(c.n)}</span></div>`;
+    }).join("") + `</div></div>`).join("");
+}
+function dealHand() {
+  const pool = DATA.traits.filter((t) => S.fams.includes(t.f) || t.f === "Freak");
+  $("#hand").innerHTML = shuffle(pool).slice(0, S.app).map(traitCard).join("");
+}
+$("#shuffle").onclick = dealMoons;
+$("#dealHand").onclick = dealHand;
+drawFamPick(); changed();
+
+/* traits browser */
+const TF = { fams: new Set(FAMS), sig: false };
+function drawFamFilter() {
+  $("#famFilter").innerHTML = FAMS.map((f) => {
+    const n = DATA.traits.filter((t) => t.f === f).length;
+    return `<button type="button" class="chip fam-${f.toLowerCase()}" id="ff-${f}" aria-pressed="${TF.fams.has(f)}">${f} ${n}</button>`;
+  }).join("");
+  $("#famFilter").querySelectorAll("button").forEach((b) => b.onclick = () => {
+    const f = b.id.slice(3);
+    if (TF.fams.size === FAMS.length) { TF.fams = new Set([f]); }
+    else if (TF.fams.has(f)) { TF.fams.delete(f); if (!TF.fams.size) TF.fams = new Set(FAMS); }
+    else TF.fams.add(f);
+    drawFamFilter(); drawTraits();
+  });
+}
+function drawTraits() {
+  const q = $("#q").value.trim().toLowerCase();
+  let list = DATA.traits.filter((t) => TF.fams.has(t.f) && (!TF.sig || t.s) && (!q || (t.n + " " + t.e).toLowerCase().includes(q)));
+  const s = $("#sort").value;
+  if (s === "pts") list = list.slice().sort((a, b) => b.p - a.p || a.n.localeCompare(b.n));
+  if (s === "name") list = list.slice().sort((a, b) => a.n.localeCompare(b.n));
+  $("#tcount").textContent = `${list.length} of ${DATA.traits.length} traits`;
+  $("#tgrid").innerHTML = list.map(traitCard).join("");
+}
+$("#q").oninput = drawTraits;
+$("#sort").onchange = drawTraits;
+$("#sigOnly").onclick = () => { TF.sig = !TF.sig; $("#sigOnly").setAttribute("aria-pressed", TF.sig); drawTraits(); };
+drawFamFilter(); drawTraits();
+
+$("#mgrid").innerHTML = DATA.moons.map((m) => `<article class="card moon"><header><span class="fam" style="color:var(--moon)">Moon</span><span class="moonicon" aria-hidden="true"></span></header><h3>${esc(m.n)}</h3><p>${esc(m.e)}</p></article>`).join("");
+$("#hgrid").innerHTML = DATA.hunts.map((h) => `<article class="card hunt"><header><span class="fam" style="color:var(--hunt)">Hunt</span></header><h3>${esc(h.n)}</h3><p>${esc(h.e)}</p></article>`).join("");
+
+/* play against the computer */
+const PLAY = { G: null, pending: null, detail: null, gid: 0, speed: { slow: 750, normal: 400, fast: 90 }, raf: 0 };
+if (!S.level) S.level = "normal";
+if (!S.speed) S.speed = "normal";
+function chipGroup(prefix, key, vals) {
+  const draw = () => vals.forEach((w) => document.getElementById(`${prefix}-${w}`).setAttribute("aria-pressed", S[key] === w));
+  vals.forEach((v) => { document.getElementById(`${prefix}-${v}`).onclick = () => { S[key] = v; save(); draw(); }; });
+  draw();
+}
+chipGroup("lvl", "level", ["easy", "normal"]);
+chipGroup("spd", "speed", ["slow", "normal", "fast"]);
+function startSummary() {
+  $("#startSummary").textContent = `${S.cpu} computer player${S.cpu > 1 ? "s" : ""} · ${S.hunts} Hunt${S.hunts > 1 ? "s" : ""} × ${S.per} cards (${S.hunts * S.per}-card Moon deck) · Health ${S.app} · ${S.fams.length === FAMS.length ? "all families" : S.fams.join(", ")}. Change these in Game setup.`;
+}
+let REG = [];
+const famClass = (e) => (e.fam || e.c.f).toLowerCase();
+const miniHtml = (e) => { REG.push(e.c); return `<button type="button" class="mini fam-${famClass(e)}${e.c.s ? " sig" : ""}" data-r="${REG.length - 1}" title="${esc(e.c.e)}">${esc(e.c.n)}<b>${e.c.p}${e.tok ? "+" + e.tok : ""}</b></button>`; };
+function optCard(o, i) {
+  return traitCard(o.card).replace('<article class="card', `<article data-opt="${i}" role="button" tabindex="0" class="card pick`)
+    .replace("<h3>", o.owner ? `<span class="ownr">${esc(o.owner)}</span><h3>` : "<h3>");
+}
+function scheduleRender() { if (!PLAY.raf) PLAY.raf = requestAnimationFrame(() => { PLAY.raf = 0; render(); }); }
+function render() {
+  const G = PLAY.G;
+  if (!G) return;
+  REG = [];
+  const pend = PLAY.pending, req = pend && pend.req;
+  const optIdx = new Map();
+  if (req) req.options.forEach((o, i) => optIdx.set(o.value, i));
+  const f = G.lastFlip;
+  $("#topbar").innerHTML = (f
+    ? `<div class="flip ${f.k}"><span class="k">${f.k === "hunt" ? `Hunt ${G.huntsHit} of ${G.huntsTotal}` : `Round ${G.round} · Moon`}</span><b>${esc(f.n)}</b><span class="t">${esc(f.e)}</span></div>`
+    : `<div class="flip"><span class="k">Dealing</span><b>Get ready</b></div>`)
+    + `<div class="nums"><div class="num"><b>${G.huntsHit}/${G.huntsTotal}</b>Hunts</div><div class="num"><b>${G.moonDeck.length}</b>Moon deck</div><div class="num"><b>${G.deck.length}</b>Trait deck</div><div class="num"><b>${G.discard.length}</b>Discards</div></div>`;
+  const me = G.players.find((p) => !p.bot);
+  $("#opps").innerHTML = G.players.filter((p) => p.bot).map((p) => `<div class="opp${G.turnOf === p ? " turn" : ""}"><div class="who"><b>${esc(p.name)}</b><span class="sc">${G.score(p)} pts</span><span>${p.hand.length} cards · HP ${G.effHealth(p)}</span>${G.turnOf === p ? '<span style="color:var(--accent)">playing…</span>' : ""}</div><div class="minis">${p.monster.length ? p.monster.map(miniHtml).join("") : '<span class="empty">No traits yet</span>'}</div></div>`).join("");
+  const parts = G.scoreParts(me);
+  document.querySelector(".mine").classList.toggle("turn", !!(req && req.kind === "play" && !req.optional));
+  $("#mineHead").innerHTML = `<b>Your monster</b><span class="sc">${parts.total} pts</span><span>${parts.base} on cards · ${parts.end >= 0 ? "+" : ""}${parts.end} end-of-game · +${parts.fam} families${parts.full ? " · +4 full set" : ""}</span>`;
+  $("#myMonster").innerHTML = me.monster.length ? me.monster.map(miniHtml).join("") : '<span class="empty">Play traits from your hand to build your monster.</span>';
+  $("#detail").hidden = !PLAY.detail;
+  $("#detail").innerHTML = PLAY.detail ? traitCard(PLAY.detail) + '<button class="btn ghost" type="button" data-closedetail>Close</button>' : "";
+  // prompt
+  const pr = $("#prompt");
+  if (req) {
+    pr.className = "prompt";
+    const fromHand = req.src === "hand";
+    const tiles = req.options.map((o, i) => {
+      if (fromHand && me.hand.includes(o.value)) return "";
+      if (o.card) return optCard(o, i);
+      return `<button class="btn ghost" type="button" data-opt="${i}">${esc(o.label)}</button>`;
+    }).join("");
+    pr.innerHTML = `<div class="q">${esc(req.prompt)}${fromHand ? " — tap a highlighted card in your hand" : ""}</div>`
+      + (tiles ? `<div class="opts">${tiles}</div>` : "")
+      + (req.optional ? `<div><button class="btn ghost" type="button" data-skip>${req.kind === "yesno" ? "No" : "Skip"}</button></div>` : "");
+  } else {
+    pr.className = "prompt idle";
+    pr.innerHTML = `<div class="q">${G.over ? "Game over." : G.turnOf ? `${esc(G.turnOf.name)} is playing…` : "…"}</div>`;
+  }
+  $("#handHead").textContent = `Your hand · ${me.hand.length} cards · Health ${G.effHealth(me)}`;
+  $("#myHand").innerHTML = me.hand.map((c) => {
+    let h = traitCard(c);
+    if (req && req.src === "hand") {
+      h = optIdx.has(c) ? h.replace('<article class="card', `<article data-opt="${optIdx.get(c)}" role="button" tabindex="0" class="card pick`) : h.replace('<article class="card', '<article class="card dim');
+    }
+    return h;
+  }).join("") || '<span class="empty">No cards in hand.</span>';
+  $("#log").innerHTML = G.log.slice(-80).reverse().map((l) => `<li class="${/^HUNT/.test(l) ? "h" : /^Round/.test(l) ? "r" : ""}">${esc(l)}</li>`).join("");
+  // results
+  const eb = $("#endBox");
+  eb.hidden = !G.over || !G.results;
+  if (G.over && G.results) {
+    const w = G.results[0];
+    eb.innerHTML = `<div class="results"><h2>${w.p.bot ? `${esc(w.p.name)} wins` : "You win!"}</h2><div class="tablewrap"><table><tr><th>Player</th><th>Traits</th><th>Cards</th><th>End of game</th><th>Families</th><th>Full set</th><th>Total</th></tr>`
+      + G.results.map((r) => `<tr><td>${esc(r.p.name)}</td><td>${r.traits}</td><td>${r.base}</td><td>${r.end}</td><td>${r.fam}</td><td>${r.full}</td><td><b>${r.total}</b></td></tr>`).join("")
+      + `</table></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="again">Play again</button><a class="btn ghost" href="#setup" style="text-decoration:none">Change setup</a></div></div>`;
+    $("#again").onclick = startGame;
+  }
+}
+function resolvePending(v) {
+  const p = PLAY.pending;
+  if (!p) return;
+  PLAY.pending = null;
+  p.resolve(v);
+  render();
+}
+$("#table").addEventListener("click", (ev) => {
+  const o = ev.target.closest("[data-opt]");
+  if (o && PLAY.pending) { resolvePending(PLAY.pending.req.options[+o.dataset.opt].value); return; }
+  if (ev.target.closest("[data-skip]")) { resolvePending(null); return; }
+  if (ev.target.closest("[data-closedetail]")) { PLAY.detail = null; render(); return; }
+  const r = ev.target.closest("[data-r]");
+  if (r) { PLAY.detail = REG[+r.dataset.r]; render(); }
+});
+$("#table").addEventListener("keydown", (ev) => { if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches("[data-opt]")) { ev.preventDefault(); ev.target.click(); } });
+function startGame() {
+  const gid = ++PLAY.gid;
+  const settings = { cpu: S.cpu, hunts: S.hunts, per: S.per, app: S.app, fams: S.fams, level: S.level, human: true };
+  const G = StitchedEngine.createGame(DATA, settings, {
+    decide: (p, req) => new Promise((res) => { if (gid !== PLAY.gid) return; PLAY.pending = { req, resolve: res }; render(); }),
+    update: () => { if (gid === PLAY.gid) scheduleRender(); },
+    wait: (n) => new Promise((r) => setTimeout(r, gid === PLAY.gid ? n * PLAY.speed[S.speed] : 0)),
+  });
+  PLAY.G = G; PLAY.pending = null; PLAY.detail = null;
+  $("#startBox").hidden = true; $("#table").hidden = false;
+  render();
+  G.run().then(() => { if (gid === PLAY.gid) render(); })
+    .catch((err) => { if (gid !== PLAY.gid) return; G.log.push(`Something broke: ${err && err.message}. Start a new game.`); render(); });
+}
+$("#startGame").onclick = startGame;
+$("#quitGame").onclick = () => { PLAY.gid++; PLAY.G = null; PLAY.pending = null; $("#table").hidden = true; $("#startBox").hidden = false; startSummary(); };
+
+/* tabs */
+const VIEWS = ["play", "setup", "traits", "moons", "hunts", "rules"];
+function route() {
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "play";
+  if (v === "play") startSummary();
+  VIEWS.forEach((x) => { document.getElementById("v-" + x).hidden = x !== v; });
+  document.querySelectorAll("nav.tabs a").forEach((a) => { if (a.getAttribute("href") === "#" + v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+}
+addEventListener("hashchange", route);
+route();
+</script>
+
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>
