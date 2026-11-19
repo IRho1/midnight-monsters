@@ -1,5 +1,5 @@
 // Offline support: keeps the game on the phone after the first visit. New versions load when online.
-const CACHE = "stitched-a5aa4fc30655";
+const CACHE = "stitched-44ff6954a21d";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => {
