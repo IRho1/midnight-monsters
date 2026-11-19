@@ -149,6 +149,9 @@ section.view { padding-top: 20px; }
 .card .art { margin: -12px -12px 2px; height: 86px; border-radius: 11px 11px 0 0; overflow: hidden; background: color-mix(in srgb, var(--c) 10%, #0d0a12); }
 .card .art svg, .card .art img, .fcard .thumb img, .ficon img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .hand.play .card .art, .prompt .opts .card .art { height: 70px; }
+/* card lists (tabs, graveyard, monster view): show the whole 4:3 picture; two per row on phones */
+.grid .card .art { height: auto; aspect-ratio: 4 / 3; }
+@media (max-width: 520px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
 .card .quote { margin: 0; font-style: italic; font-size: 12.5px; color: var(--muted) !important; border-top: 1px dashed color-mix(in srgb, var(--c) 35%, transparent); padding-top: 5px; }
 .fcard { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 0 7px; align-items: start; }
 .fcard .thumb { grid-row: span 2; width: 40px; height: 36px; border-radius: 6px; overflow: hidden; background: #0d0a12; }
