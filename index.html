@@ -258,7 +258,8 @@ body.dragging-card .pile.discard { border-color: #ff5a4f99; }
 .pile.discard.hot { border: 3px solid var(--hunt); background: color-mix(in srgb, var(--hunt) 22%, #1a1424); color: #fff; box-shadow: 0 0 0 3px #ff5a4f44, 0 0 22px #ff5a4f99; }
 .pile.discard.hot b { color: #fff; }
 body.dragging-card .my-field.target, body.dragging-card .pile.discard.hot { border-color: var(--accent); }
-.stage { display: grid; gap: 8px; justify-items: center; align-content: center; min-height: 100%; }
+.stage { display: grid; gap: 8px; justify-items: center; align-content: center; }
+.stagefield { margin-top: 6px; opacity: .85; }
 .stagehint { font: 700 14px var(--head); color: var(--accent); }
 .stagecards { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .hcard.staged { --rot: 0deg; --lift: 0px; margin: 0; transform: none; opacity: .9; cursor: default; }
@@ -2400,7 +2401,9 @@ function renderMine(G, me, req) {
   if (showStage) {
     const verb = req ? VERB(req).toLowerCase() : "discard";
     $("#myField").innerHTML = `<div class="stage"><span class="stagehint">${req ? `Drop cards here to ${verb === "choose" ? "pick them" : verb + " them"}` : "Done"}</span>`
-      + `<div class="stagecards">${PLAY.staged.map((c) => handCard(c, " staged", "")).join("")}</div></div>`;
+      + `<div class="stagecards">${PLAY.staged.map((c) => handCard(c, " staged", "")).join("")}</div></div>`
+      // your monster stays in view under the drop zone while you discard
+      + (me.monster.length ? `<div class="brow wrap stagefield">${me.monster.map((e) => boardCard(e, me.id)).join("")}</div>` : "");
     return renderMeBar(G, me);
   }
   $("#myField").innerHTML = (me.monster.length && playing ? '<span class="drophint">Drop a card here to play it</span>' : "")
