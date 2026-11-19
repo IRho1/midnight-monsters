@@ -334,6 +334,9 @@ body.dragging-card .my-field.target, body.dragging-card .pile.discard.hot { bord
 .etype { display: inline-block; font: 800 9.5px/1 var(--head); font-style: normal; text-transform: uppercase; letter-spacing: .07em; padding: 3px 7px; border-radius: 999px; color: #120e17; }
 .t-action { background: #ffb347; } .t-ongoing { background: #7fd1ff; } .t-scoring { background: #f3c96b; } .t-reaction { background: #c49bff; } .t-final { background: #ff6b6b; } .t-none { background: #6e6478; color: #efe8f3; } .t-curse { background: #8b1e3f; color: #fff; } .t-def { background: #3d5a80; color: #fff; } .t-req { background: #2f6f8f; color: #fff; }
 .hcard .htype { position: absolute; left: 3px; top: 44px; display: flex; gap: 2px; }
+/* in the hand each card hides the right side of the one before it, so points and the Legend/Gear tag sit on the left */
+.hcard .gem { right: auto; left: 3px; }
+.hcard .htag { top: 26px; }
 .hcard .htype .etype { font-size: 7px; padding: 2px 4px; }
 /* board */
 .history { display: grid; gap: 6px; }
