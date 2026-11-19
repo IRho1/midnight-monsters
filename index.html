@@ -304,6 +304,10 @@ body.dragging-card .my-field.target, body.dragging-card .pile.discard.hot { bord
 .overlay.zoom { place-items: center; align-content: center; background: #0d0a12cc; }
 .zoomcard { display: grid; gap: 10px; justify-items: center; }
 .zoomcard .card { width: min(280px, 80vw); }
+.zoomrow { display: flex; align-items: center; gap: 6px; }
+.znav { flex: none; width: 38px; height: 64px; border-radius: 12px; border: 1px solid var(--line); background: #1c1623ee; color: var(--fg); font: 700 30px var(--head); cursor: pointer; }
+.zcount { font: 700 12px var(--head); color: var(--muted); }
+.zoomrow .card { width: min(280px, calc(100vw - 112px)); }
 .loglist { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13px; }
 .loglist li.h { color: var(--hunt); font-weight: 700; }
 .loglist li.r { color: var(--moon); font-weight: 700; }
@@ -2423,7 +2427,8 @@ function renderOverlays(G) {
     }
   }
   $("#detail").hidden = !PLAY.detail;
-  $("#detail").innerHTML = PLAY.detail ? `<div class="zoomcard">${traitCard(PLAY.detail.c)}${PLAY.detail.gear.length ? `<div class="gearlist"><b>Attached Gear</b><div class="opts">${PLAY.detail.gear.map(traitCard).join("")}</div></div>` : ""}<button class="btn ghost" type="button" data-closedetail>Close</button></div>` : "";
+  const dl = PLAY.detailList || [], di = dl.indexOf(PLAY.detail), many = dl.length > 1 && di >= 0;
+  $("#detail").innerHTML = PLAY.detail ? `<div class="zoomcard"><div class="zoomrow">${many ? `<button class="znav" type="button" data-dstep="-1" aria-label="Previous card">&lsaquo;</button>` : ""}${traitCard(PLAY.detail.c)}${many ? `<button class="znav" type="button" data-dstep="1" aria-label="Next card">&rsaquo;</button>` : ""}</div>${many ? `<span class="zcount">${di + 1} / ${dl.length} &middot; swipe or tap the arrows</span>` : ""}${PLAY.detail.gear.length ? `<div class="gearlist"><b>Attached Gear</b><div class="opts">${PLAY.detail.gear.map(traitCard).join("")}</div></div>` : ""}<button class="btn ghost" type="button" data-closedetail>Close</button></div>` : "";
   const m = $("#menu");
   m.hidden = !PLAY.menu;
   if (PLAY.menu) {
@@ -2642,6 +2647,8 @@ $("#table").addEventListener("click", (ev) => {
   if (ev.target.closest("[data-peek]")) { PLAY.peek = PLAY.pending && PLAY.pending.req; render(); return; }
   if (ev.target.closest("[data-unpeek]")) { PLAY.peek = null; render(); return; }
   if (ev.target.closest("[data-closedetail]")) { PLAY.detail = null; render(); return; }
+  const ds = ev.target.closest("[data-dstep]");
+  if (ds) { stepDetail(+ds.dataset.dstep); return; }
   if (ev.target.closest("[data-back]")) { PLAY.view = null; render(); return; }
   if (ev.target.closest("[data-closemenu]")) { PLAY.menu = false; render(); return; }
   if (ev.target.closest("[data-quit]")) { quitGame(); return; }
@@ -2652,8 +2659,28 @@ $("#table").addEventListener("click", (ev) => {
   const seat = ev.target.closest("[data-seat]");
   if (seat) { PLAY.focus = +seat.dataset.seat; render(); return; }
   const r = ev.target.closest("[data-r]");
-  if (r) { PLAY.detail = REG[+r.dataset.r]; render(); }
+  if (r) {
+    // remember the row the card sits in (a monster, a hand...) so the zoom can step through it
+    const row = r.closest(".brow, .hand, .grid, .stagecards") || r.parentElement;
+    PLAY.detailList = [...row.querySelectorAll("[data-r]")].map((el) => REG[+el.dataset.r]);
+    PLAY.detail = REG[+r.dataset.r]; render();
+  }
 });
+function stepDetail(d) {
+  const dl = PLAY.detailList || [], i = dl.indexOf(PLAY.detail);
+  if (i < 0 || dl.length < 2) return;
+  PLAY.detail = dl[(i + d + dl.length) % dl.length]; render();
+}
+// swipe left/right on a zoomed card to see the next/previous one
+let swipeX = null, swipeY = null;
+$("#detail").addEventListener("touchstart", (ev) => { swipeX = ev.touches[0].clientX; swipeY = ev.touches[0].clientY; }, { passive: true });
+$("#detail").addEventListener("touchend", (ev) => {
+  if (swipeX == null) return;
+  const dx = ev.changedTouches[0].clientX - swipeX, dy = ev.changedTouches[0].clientY - swipeY;
+  swipeX = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) stepDetail(dx < 0 ? 1 : -1);
+}, { passive: true });
+addEventListener("keydown", (ev) => { if (PLAY.detail && (ev.key === "ArrowLeft" || ev.key === "ArrowRight")) stepDetail(ev.key === "ArrowLeft" ? -1 : 1); });
 $("#table").addEventListener("keydown", (ev) => {
   if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches("[data-opt],[data-seat],[data-r]")) { ev.preventDefault(); ev.target.click(); }
 });
